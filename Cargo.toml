@@ -1,0 +1,16 @@
+[package]
+name = "rustboy"
+version = "0.1.0"
+authors = ["Charlie Boggus <charlie.boggus@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+bitflags = "1.0.4"
+rand = "0.6.5"
+sdl2 = "0.32.2"
+time ="0.1.42"
+
+[lib]
+name = "rustboy"
+path = "src/lib.rs"
+edition = "2018"
