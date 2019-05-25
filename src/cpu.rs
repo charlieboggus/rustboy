@@ -36,16 +36,20 @@ struct Registers
 /// Represents the CPU Flags register (register 'F')
 struct Flags
 {
-    /// Zero flag:
+    /// Zero flag: set when the result of a math operation is zero or two
+    /// values match when using the CP instruction
     z: bool,
 
-    /// Subtract flag:
+    /// Subtract flag: set if a subtraction was performed in the last
+    /// math operation
     n: bool,
 
-    /// Half-Carry flag:
+    /// Half-Carry flag: set if a carry occurred from the lower nibble
+    /// in the last math operation
     h: bool,
 
-    /// Carry flag:
+    /// Carry flag: set if a carry occurred from the last math operation
+    /// or if register A is the smaller value when executing the CP instruction
     c: bool
 }
 
@@ -138,14 +142,15 @@ impl CPU
         self.cycles = 0;
 
         // Interrupts
-        
+        // TODO
+
         // Halted
+        // TODO
 
-        // Fetch and run the next instruction
+        // Fetch and run the next instruction and return number of cycles 
+        // it took to execute
         let instruction = self.get_next_instruction();
-        (instruction)(self);
-
-        // Return the number of cycles elapsed
+        self.cycles = (instruction)(self);
         self.cycles
     }
 
@@ -341,7 +346,7 @@ lazy_static!
         m.insert(0x43, (ld_b_e as Instruction, "LD B, E"));
         m.insert(0x44, (ld_b_h as Instruction, "LD B, H"));
         m.insert(0x45, (ld_b_l as Instruction, "LD B, L"));
-        m.insert(0x46, (ld_b_hl as Instruction, "LD B, HL"));
+        m.insert(0x46, (ld_b_hl as Instruction, "LD B, (HL)"));
 
         m
     };
