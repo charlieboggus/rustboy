@@ -1,5 +1,5 @@
 /target
-**/*.rs.bk
 /ROMs
+**/*.rs.bk
 *.dll
 *.lib
