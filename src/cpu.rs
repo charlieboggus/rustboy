@@ -158,20 +158,38 @@ impl CPU
     fn get_next_instruction(&mut self) -> Instruction
     {
         // Get the next opcode from memory
-        let op = self.fetch_byte(self.regs.pc);
+        let mut op = self.fetch_byte(self.regs.pc);
 
-        // Increment the program counter
-        self.regs.pc += 1;
-        
-        // Return function pointer to instruction operation, or undefined if
-        // opcode doesn't index any existing instructions
-        if let Some((instruction, _)) = OPCODES.get(&op)
+        // Check if the opcode is a prefixed opcode
+        if op != 0xCB
         {
-            *instruction
+            // If it's not we can just get the instruction from the regular
+            // opcode hashmap
+            self.regs.pc += 1;
+            if let Some((instruction, _)) = OPCODES.get(&op)
+            {
+                *instruction
+            }
+            else
+            {
+                crate::cpu::undefined
+            }
         }
         else
         {
-            crate::cpu::undefined
+            // If it is we have to fetch the next byte and use it to search for
+            // an instruction in the prefixed opcode hashmap
+            self.regs.pc += 1;
+            op = self.fetch_byte(self.regs.pc);
+            self.regs.pc += 1;
+            if let Some((instruction, _)) = OPCODES_CB.get(&op)
+            {
+                *instruction
+            }
+            else
+            {
+                crate::cpu::undefined
+            }
         }
     }
 
@@ -315,16 +333,26 @@ impl CPU
         self.ime = false;
     }
 
-    /// Enable interrupts
+    /// Enable interrupts immediately
     fn enable_interrupts(&mut self)
     {
         self.ime = true;
+    }
+
+    /// Enable interrupts after next instruction
+    fn enable_interrupts_after_next(&mut self)
+    {
     }
 
     /// Halt and wait for interrupts
     fn halt(&mut self)
     {
         self.halted = true;
+    }
+
+    /// Stop CPU and LCD display until button press
+    fn stop(&mut self)
+    {
     }
 
     fn interrupt(&mut self)
@@ -347,7 +375,8 @@ impl CPU
 
 lazy_static!
 {
-    /// HashMap that indexes instruction function pointers and their names by opcode
+    /// HashMap that indexes instruction function pointers and their names by 
+    /// their opcode
     static ref OPCODES: HashMap< u8, (Instruction, &'static str) > =
     {
         use crate::cpu::*;
@@ -569,6 +598,41 @@ lazy_static!
         m.insert(0x3B, (dec_sp as Instruction, "DEC SP"));
 
         // ------------------------------- Misc. -------------------------------
+
+        m.insert(0x27, (daa as Instruction, "DAA"));
+        m.insert(0x2F, (cpl as Instruction, "CPL"));
+        m.insert(0x3F, (ccf as Instruction, "CCF"));
+        m.insert(0x37, (scf as Instruction, "SCF"));
+        m.insert(0x76, (halt as Instruction, "HALT"));
+        m.insert(0x10, (stop as Instruction, "STOP"));
+        m.insert(0xF3, (di as Instruction, "DI"));
+        m.insert(0xFB, (ei as Instruction, "EI"));
+
+        // ------------------------- Rotates & Shifts --------------------------
+
+        m.insert(0x07, (rlca as Instruction, "RLCA"));
+        m.insert(0x17, (rla as Instruction, "RLA"));
+        m.insert(0x0F, (rrca as Instruction, "RRCA"));
+        m.insert(0x1F, (rra as Instruction, "RRA"));
+
+        m
+    };
+
+    /// HashMap that indexes instruction function pointers and their names by
+    /// opcodes prefixed by 0xCB
+    static ref OPCODES_CB: HashMap< u8, (Instruction, &'static str) > =
+    {
+        use crate::cpu::*;
+        let mut m = HashMap::new();
+
+        m.insert(0x37, (swap_a as Instruction, "SWAP A"));
+        m.insert(0x30, (swap_b as Instruction, "SWAP B"));
+        m.insert(0x31, (swap_c as Instruction, "SWAP C"));
+        m.insert(0x32, (swap_d as Instruction, "SWAP D"));
+        m.insert(0x33, (swap_e as Instruction, "SWAP E"));
+        m.insert(0x34, (swap_h as Instruction, "SWAP H"));
+        m.insert(0x35, (swap_l as Instruction, "SWAP L"));
+        m.insert(0x36, (swap_hl as Instruction, "SWAP HL"));
 
         m
     };
@@ -2710,4 +2774,249 @@ fn dec_sp(cpu: &mut CPU) -> u8
     let sp = cpu.regs.sp;
     cpu.regs.sp = sp - 1;
     8
+}
+
+/// Helper function to swap the two nibbles of a byte and update the CPU
+/// flags register
+fn swap(cpu: &mut CPU, v: u8) -> u8
+{
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    (v << 4) | (v >> 4)
+}
+
+/// Swap the low and high nibbles of 'A'
+fn swap_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let v = swap(cpu, a);
+    cpu.regs.a = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'B'
+fn swap_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    let v = swap(cpu, b);
+    cpu.regs.b = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'C'
+fn swap_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    let v = swap(cpu, c);
+    cpu.regs.c = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'D'
+fn swap_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    let v = swap(cpu, d);
+    cpu.regs.d = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'E'
+fn swap_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    let v = swap(cpu, e);
+    cpu.regs.e = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'H'
+fn swap_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    let v = swap(cpu, h);
+    cpu.regs.h = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'L'
+fn swap_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    let v = swap(cpu, l);
+    cpu.regs.l = v;   
+    8
+}
+
+/// Swap the low and high nibbles of 'HL'
+fn swap_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = swap(cpu, n);
+    cpu.store_byte(hl, v);
+    16
+}
+
+/// Decimal adjust 'A' for BCD operations
+fn daa(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let mut adj = 0;
+
+    if cpu.flags.h
+    {
+        adj |= 0x06;
+    }
+
+    if cpu.flags.c
+    {
+        adj |= 0x60;
+    }
+
+    let res = if cpu.flags.n 
+    {
+        a - adj
+    } 
+    else 
+    {
+        if a & 0x0F > 0x09 
+        { 
+            adj |= 0x06; 
+        }
+
+        if a > 0x99 
+        {
+            adj |= 0x60; 
+        }
+
+        a + adj
+    };
+
+    cpu.regs.a = res;
+    cpu.flags.z = res == 0;
+    cpu.flags.h = false;
+    cpu.flags.c = adj & 0x60 != 0;
+    4
+}
+
+/// Compliment 'A' (flip all bits)
+fn cpl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.a = !a;
+    cpu.flags.n = true;
+    cpu.flags.h = true;
+    4
+}
+
+/// Compliment carry flag (flip all bits)
+fn ccf(cpu: &mut CPU) -> u8
+{
+    let carry = cpu.flags.c;
+    cpu.flags.c = !carry;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    4
+}
+
+/// Set carry flag
+fn scf(cpu: &mut CPU) -> u8
+{
+    cpu.flags.c = true;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    4
+}
+
+/// Power down CPU until an interrupt occurs
+fn halt(cpu: &mut CPU) -> u8
+{
+    cpu.halt();
+    4
+}
+
+/// Halt CPU & LCD display until button press
+fn stop(cpu: &mut CPU) -> u8
+{
+    let _ = cpu.next_byte();
+    cpu.stop();
+    4
+}
+
+/// Disable interrupts but not immediately. Disabled after next instruction
+fn di(cpu: &mut CPU) -> u8
+{
+    cpu.disable_interrupts();
+    4
+}
+
+/// Enables interrupts but not immediately. Enabled after next instruction
+fn ei(cpu: &mut CPU) -> u8
+{
+    cpu.enable_interrupts_after_next();
+    4
+}
+
+/// Rotate 'A' Left
+fn rlca(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = a >> 7;
+    cpu.regs.a = (a << 1) | c;
+    cpu.flags.c = c != 0;
+    cpu.flags.z = false;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    4
+}
+
+/// Rotate 'A' Left through carry
+fn rla(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let new_c = (a >> 7) != 0;
+    let old_c = cpu.flags.c as u8;
+
+    cpu.regs.a = (a << 1) | old_c;
+
+    cpu.flags.c = new_c;
+    cpu.flags.z = false;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    4
+}
+
+/// Rotate 'A' Right
+fn rrca(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = a & 1;
+
+    cpu.regs.a = (a >> 1) | (c << 7);
+
+    cpu.flags.c = c != 0;
+    cpu.flags.z = false;
+    cpu.flags.h = false;
+    cpu.flags.n = false;
+    4
+}
+
+/// Rotate 'A' Right through carry
+fn rra(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let new_c = (a & 1) != 0;
+    let old_c = cpu.flags.c as u8;
+
+    cpu.regs.a = (a >> 1) | (old_c << 7);
+
+    cpu.flags.c = new_c;
+    cpu.flags.z = false;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    4
 }
