@@ -631,16 +631,12 @@ lazy_static!
         // ------------------------------- Jumps -------------------------------
 
         m.insert(0xC3, (jp_nn as Instruction, "JP nn"));
-
         m.insert(0xC2, (jp_nz_nn as Instruction, "JP Z, nn"));
         m.insert(0xCA, (jp_z_nn as Instruction, "JP Z, nn"));
         m.insert(0xD2, (jp_nc_nn as Instruction, "JP NC, nn"));
         m.insert(0xDA, (jp_c_nn as Instruction, "JP C, nn"));
-
         m.insert(0xE9, (jp_hl as Instruction, "JP HL"));
-
         m.insert(0x18, (jr_n as Instruction, "JR n"));
-
         m.insert(0x20, (jr_nz as Instruction, "JR NZ, *"));
         m.insert(0x28, (jr_z as Instruction, "JR Z, *"));
         m.insert(0x30, (jr_nc as Instruction, "JR NC, *"));
@@ -649,7 +645,6 @@ lazy_static!
         // ------------------------------- Calls -------------------------------
 
         m.insert(0xCD, (call_nn as Instruction, "CALL nn"));
-
         m.insert(0xC4, (call_nz_nn as Instruction, "CALL NZ, nn"));
         m.insert(0xCC, (call_z_nn as Instruction, "CALL Z, nn"));
         m.insert(0xD4, (call_nc_nn as Instruction, "CALL NC, nn"));
@@ -669,12 +664,10 @@ lazy_static!
         // ----------------------------- Returns -------------------------------
 
         m.insert(0xC9, (ret as Instruction, "RET"));
-
         m.insert(0xC0, (ret_nz as Instruction, "RET NZ"));
         m.insert(0xC8, (ret_z as Instruction, "RET Z"));
         m.insert(0xD0, (ret_nc as Instruction, "RET NC"));
         m.insert(0xD8, (ret_c as Instruction, "RET C"));
-
         m.insert(0xD9, (reti as Instruction, "RETI"));
 
         m
@@ -824,23 +817,135 @@ lazy_static!
         m.insert(0x76, ((|cpu: &mut CPU| { bit_hl(cpu, 6); 16 }) as Instruction, "BIT 6, HL"));
         m.insert(0x7E, ((|cpu: &mut CPU| { bit_hl(cpu, 7); 16 }) as Instruction, "BIT 7, HL"));
 
-        m.insert(0xC7, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, A"));
-        m.insert(0xC0, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, B"));
-        m.insert(0xC1, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, C"));
-        m.insert(0xC2, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, D"));
-        m.insert(0xC3, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, E"));
-        m.insert(0xC4, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, H"));
-        m.insert(0xC5, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, L"));
-        m.insert(0xC6, ((|cpu: &mut CPU| { 16 }) as Instruction, "SET 0, HL"));
+        m.insert(0xC7, ((|cpu: &mut CPU| { set_a(cpu, 0); 8 }) as Instruction, "SET 0, A"));
+        m.insert(0xCF, ((|cpu: &mut CPU| { set_a(cpu, 1); 8 }) as Instruction, "SET 1, A"));
+        m.insert(0xD7, ((|cpu: &mut CPU| { set_a(cpu, 2); 8 }) as Instruction, "SET 2, A"));
+        m.insert(0xDF, ((|cpu: &mut CPU| { set_a(cpu, 3); 8 }) as Instruction, "SET 3, A"));
+        m.insert(0xE7, ((|cpu: &mut CPU| { set_a(cpu, 4); 8 }) as Instruction, "SET 4, A"));
+        m.insert(0xEF, ((|cpu: &mut CPU| { set_a(cpu, 5); 8 }) as Instruction, "SET 5, A"));
+        m.insert(0xF7, ((|cpu: &mut CPU| { set_a(cpu, 6); 8 }) as Instruction, "SET 6, A"));
+        m.insert(0xF7, ((|cpu: &mut CPU| { set_a(cpu, 7); 8 }) as Instruction, "SET 7, A"));
+        m.insert(0xC0, ((|cpu: &mut CPU| { set_b(cpu, 0); 8 }) as Instruction, "SET 0, B"));
+        m.insert(0xC8, ((|cpu: &mut CPU| { set_b(cpu, 1); 8 }) as Instruction, "SET 1, B"));
+        m.insert(0xD0, ((|cpu: &mut CPU| { set_b(cpu, 2); 8 }) as Instruction, "SET 2, B"));
+        m.insert(0xD8, ((|cpu: &mut CPU| { set_b(cpu, 3); 8 }) as Instruction, "SET 3, B"));
+        m.insert(0xE0, ((|cpu: &mut CPU| { set_b(cpu, 4); 8 }) as Instruction, "SET 4, B"));
+        m.insert(0xE8, ((|cpu: &mut CPU| { set_b(cpu, 5); 8 }) as Instruction, "SET 5, B"));
+        m.insert(0xF0, ((|cpu: &mut CPU| { set_b(cpu, 6); 8 }) as Instruction, "SET 6, B"));
+        m.insert(0xF8, ((|cpu: &mut CPU| { set_b(cpu, 7); 8 }) as Instruction, "SET 7, B"));
+        m.insert(0xC1, ((|cpu: &mut CPU| { set_c(cpu, 0); 8 }) as Instruction, "SET 0, C"));
+        m.insert(0xC9, ((|cpu: &mut CPU| { set_c(cpu, 1); 8 }) as Instruction, "SET 1, C"));
+        m.insert(0xD1, ((|cpu: &mut CPU| { set_c(cpu, 2); 8 }) as Instruction, "SET 2, C"));
+        m.insert(0xD9, ((|cpu: &mut CPU| { set_c(cpu, 3); 8 }) as Instruction, "SET 3, C"));
+        m.insert(0xE1, ((|cpu: &mut CPU| { set_c(cpu, 4); 8 }) as Instruction, "SET 4, C"));
+        m.insert(0xE9, ((|cpu: &mut CPU| { set_c(cpu, 5); 8 }) as Instruction, "SET 5, C"));
+        m.insert(0xF1, ((|cpu: &mut CPU| { set_c(cpu, 6); 8 }) as Instruction, "SET 6, C"));
+        m.insert(0xF9, ((|cpu: &mut CPU| { set_c(cpu, 7); 8 }) as Instruction, "SET 7, C"));
+        m.insert(0xC2, ((|cpu: &mut CPU| { set_d(cpu, 0); 8 }) as Instruction, "SET 0, D"));
+        m.insert(0xCA, ((|cpu: &mut CPU| { set_d(cpu, 1); 8 }) as Instruction, "SET 1, D"));
+        m.insert(0xD2, ((|cpu: &mut CPU| { set_d(cpu, 2); 8 }) as Instruction, "SET 2, D"));
+        m.insert(0xDA, ((|cpu: &mut CPU| { set_d(cpu, 3); 8 }) as Instruction, "SET 3, D"));
+        m.insert(0xE2, ((|cpu: &mut CPU| { set_d(cpu, 4); 8 }) as Instruction, "SET 4, D"));
+        m.insert(0xEA, ((|cpu: &mut CPU| { set_d(cpu, 5); 8 }) as Instruction, "SET 5, D"));
+        m.insert(0xF2, ((|cpu: &mut CPU| { set_d(cpu, 6); 8 }) as Instruction, "SET 6, D"));
+        m.insert(0xFA, ((|cpu: &mut CPU| { set_d(cpu, 7); 8 }) as Instruction, "SET 7, D"));
+        m.insert(0xC3, ((|cpu: &mut CPU| { set_e(cpu, 0); 8 }) as Instruction, "SET 0, E"));
+        m.insert(0xCB, ((|cpu: &mut CPU| { set_e(cpu, 1); 8 }) as Instruction, "SET 1, E"));
+        m.insert(0xD3, ((|cpu: &mut CPU| { set_e(cpu, 2); 8 }) as Instruction, "SET 2, E"));
+        m.insert(0xDB, ((|cpu: &mut CPU| { set_e(cpu, 3); 8 }) as Instruction, "SET 3, E"));
+        m.insert(0xE3, ((|cpu: &mut CPU| { set_e(cpu, 4); 8 }) as Instruction, "SET 4, E"));
+        m.insert(0xEB, ((|cpu: &mut CPU| { set_e(cpu, 5); 8 }) as Instruction, "SET 5, E"));
+        m.insert(0xF3, ((|cpu: &mut CPU| { set_e(cpu, 6); 8 }) as Instruction, "SET 6, E"));
+        m.insert(0xFB, ((|cpu: &mut CPU| { set_e(cpu, 7); 8 }) as Instruction, "SET 7, E"));
+        m.insert(0xC4, ((|cpu: &mut CPU| { set_h(cpu, 0); 8 }) as Instruction, "SET 0, H"));
+        m.insert(0xCC, ((|cpu: &mut CPU| { set_h(cpu, 1); 8 }) as Instruction, "SET 1, H"));
+        m.insert(0xD4, ((|cpu: &mut CPU| { set_h(cpu, 2); 8 }) as Instruction, "SET 2, H"));
+        m.insert(0xDC, ((|cpu: &mut CPU| { set_h(cpu, 3); 8 }) as Instruction, "SET 3, H"));
+        m.insert(0xE4, ((|cpu: &mut CPU| { set_h(cpu, 4); 8 }) as Instruction, "SET 4, H"));
+        m.insert(0xEC, ((|cpu: &mut CPU| { set_h(cpu, 5); 8 }) as Instruction, "SET 5, H"));
+        m.insert(0xF4, ((|cpu: &mut CPU| { set_h(cpu, 6); 8 }) as Instruction, "SET 6, H"));
+        m.insert(0xFC, ((|cpu: &mut CPU| { set_h(cpu, 7); 8 }) as Instruction, "SET 7, H"));
+        m.insert(0xC5, ((|cpu: &mut CPU| { set_l(cpu, 0); 8 }) as Instruction, "SET 0, L"));
+        m.insert(0xCD, ((|cpu: &mut CPU| { set_l(cpu, 1); 8 }) as Instruction, "SET 1, L"));
+        m.insert(0xD5, ((|cpu: &mut CPU| { set_l(cpu, 2); 8 }) as Instruction, "SET 2, L"));
+        m.insert(0xDD, ((|cpu: &mut CPU| { set_l(cpu, 3); 8 }) as Instruction, "SET 3, L"));
+        m.insert(0xE5, ((|cpu: &mut CPU| { set_l(cpu, 4); 8 }) as Instruction, "SET 4, L"));
+        m.insert(0xED, ((|cpu: &mut CPU| { set_l(cpu, 5); 8 }) as Instruction, "SET 5, L"));
+        m.insert(0xF5, ((|cpu: &mut CPU| { set_l(cpu, 6); 8 }) as Instruction, "SET 6, L"));
+        m.insert(0xFD, ((|cpu: &mut CPU| { set_l(cpu, 7); 8 }) as Instruction, "SET 7, L"));
+        m.insert(0xC6, ((|cpu: &mut CPU| { set_hl(cpu, 0); 16 }) as Instruction, "SET 0, HL"));
+        m.insert(0xCE, ((|cpu: &mut CPU| { set_hl(cpu, 1); 16 }) as Instruction, "SET 1, HL"));
+        m.insert(0xD6, ((|cpu: &mut CPU| { set_hl(cpu, 2); 16 }) as Instruction, "SET 2, HL"));
+        m.insert(0xDE, ((|cpu: &mut CPU| { set_hl(cpu, 3); 16 }) as Instruction, "SET 3, HL"));
+        m.insert(0xE6, ((|cpu: &mut CPU| { set_hl(cpu, 4); 16 }) as Instruction, "SET 4, HL"));
+        m.insert(0xEE, ((|cpu: &mut CPU| { set_hl(cpu, 5); 16 }) as Instruction, "SET 5, HL"));
+        m.insert(0xF6, ((|cpu: &mut CPU| { set_hl(cpu, 6); 16 }) as Instruction, "SET 6, HL"));
+        m.insert(0xFE, ((|cpu: &mut CPU| { set_hl(cpu, 7); 16 }) as Instruction, "SET 7, HL"));
 
-        m.insert(0x87, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, A"));
-        m.insert(0x80, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, B"));
-        m.insert(0x81, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, C"));
-        m.insert(0x82, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, D"));
-        m.insert(0x83, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, E"));
-        m.insert(0x84, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, H"));
-        m.insert(0x85, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, L"));
-        m.insert(0x86, ((|cpu: &mut CPU| { 16 }) as Instruction, "RES 0, HL"));
+        m.insert(0x87, ((|cpu: &mut CPU| { res_a(cpu, 0); 8 }) as Instruction, "RES 0, A"));
+        m.insert(0x8F, ((|cpu: &mut CPU| { res_a(cpu, 1); 8 }) as Instruction, "RES 1, A"));
+        m.insert(0x97, ((|cpu: &mut CPU| { res_a(cpu, 2); 8 }) as Instruction, "RES 2, A"));
+        m.insert(0x9F, ((|cpu: &mut CPU| { res_a(cpu, 3); 8 }) as Instruction, "RES 3, A"));
+        m.insert(0xA7, ((|cpu: &mut CPU| { res_a(cpu, 4); 8 }) as Instruction, "RES 4, A"));
+        m.insert(0xAF, ((|cpu: &mut CPU| { res_a(cpu, 5); 8 }) as Instruction, "RES 5, A"));
+        m.insert(0xB7, ((|cpu: &mut CPU| { res_a(cpu, 6); 8 }) as Instruction, "RES 6, A"));
+        m.insert(0xBF, ((|cpu: &mut CPU| { res_a(cpu, 7); 8 }) as Instruction, "RES 7, A"));
+        m.insert(0x80, ((|cpu: &mut CPU| { res_b(cpu, 0); 8 }) as Instruction, "RES 0, B"));
+        m.insert(0x88, ((|cpu: &mut CPU| { res_b(cpu, 1); 8 }) as Instruction, "RES 1, B"));
+        m.insert(0x90, ((|cpu: &mut CPU| { res_b(cpu, 2); 8 }) as Instruction, "RES 2, B"));
+        m.insert(0x98, ((|cpu: &mut CPU| { res_b(cpu, 3); 8 }) as Instruction, "RES 3, B"));
+        m.insert(0xA0, ((|cpu: &mut CPU| { res_b(cpu, 4); 8 }) as Instruction, "RES 4, B"));
+        m.insert(0xA8, ((|cpu: &mut CPU| { res_b(cpu, 5); 8 }) as Instruction, "RES 5, B"));
+        m.insert(0xB0, ((|cpu: &mut CPU| { res_b(cpu, 6); 8 }) as Instruction, "RES 6, B"));
+        m.insert(0xB8, ((|cpu: &mut CPU| { res_b(cpu, 7); 8 }) as Instruction, "RES 7, B"));
+        m.insert(0x81, ((|cpu: &mut CPU| { res_c(cpu, 0); 8 }) as Instruction, "RES 0, C"));
+        m.insert(0x89, ((|cpu: &mut CPU| { res_c(cpu, 1); 8 }) as Instruction, "RES 1, C"));
+        m.insert(0x91, ((|cpu: &mut CPU| { res_c(cpu, 2); 8 }) as Instruction, "RES 2, C"));
+        m.insert(0x99, ((|cpu: &mut CPU| { res_c(cpu, 3); 8 }) as Instruction, "RES 3, C"));
+        m.insert(0xA1, ((|cpu: &mut CPU| { res_c(cpu, 4); 8 }) as Instruction, "RES 4, C"));
+        m.insert(0xA9, ((|cpu: &mut CPU| { res_c(cpu, 5); 8 }) as Instruction, "RES 5, C"));
+        m.insert(0xB1, ((|cpu: &mut CPU| { res_c(cpu, 6); 8 }) as Instruction, "RES 6, C"));
+        m.insert(0xB9, ((|cpu: &mut CPU| { res_c(cpu, 7); 8 }) as Instruction, "RES 7, C"));
+        m.insert(0x82, ((|cpu: &mut CPU| { res_d(cpu, 0); 8 }) as Instruction, "RES 0, D"));
+        m.insert(0x8A, ((|cpu: &mut CPU| { res_d(cpu, 1); 8 }) as Instruction, "RES 1, D"));
+        m.insert(0x92, ((|cpu: &mut CPU| { res_d(cpu, 2); 8 }) as Instruction, "RES 2, D"));
+        m.insert(0x9A, ((|cpu: &mut CPU| { res_d(cpu, 3); 8 }) as Instruction, "RES 3, D"));
+        m.insert(0xA2, ((|cpu: &mut CPU| { res_d(cpu, 4); 8 }) as Instruction, "RES 4, D"));
+        m.insert(0xAA, ((|cpu: &mut CPU| { res_d(cpu, 5); 8 }) as Instruction, "RES 5, D"));
+        m.insert(0xB2, ((|cpu: &mut CPU| { res_d(cpu, 6); 8 }) as Instruction, "RES 6, D"));
+        m.insert(0xBA, ((|cpu: &mut CPU| { res_d(cpu, 7); 8 }) as Instruction, "RES 7, D"));
+        m.insert(0x83, ((|cpu: &mut CPU| { res_e(cpu, 0); 8 }) as Instruction, "RES 0, E"));
+        m.insert(0x8B, ((|cpu: &mut CPU| { res_e(cpu, 1); 8 }) as Instruction, "RES 1, E"));
+        m.insert(0x93, ((|cpu: &mut CPU| { res_e(cpu, 2); 8 }) as Instruction, "RES 2, E"));
+        m.insert(0x9B, ((|cpu: &mut CPU| { res_e(cpu, 3); 8 }) as Instruction, "RES 3, E"));
+        m.insert(0xA3, ((|cpu: &mut CPU| { res_e(cpu, 4); 8 }) as Instruction, "RES 4, E"));
+        m.insert(0xAB, ((|cpu: &mut CPU| { res_e(cpu, 5); 8 }) as Instruction, "RES 5, E"));
+        m.insert(0xB3, ((|cpu: &mut CPU| { res_e(cpu, 6); 8 }) as Instruction, "RES 6, E"));
+        m.insert(0xBB, ((|cpu: &mut CPU| { res_e(cpu, 7); 8 }) as Instruction, "RES 7, E"));
+        m.insert(0x84, ((|cpu: &mut CPU| { res_h(cpu, 0); 8 }) as Instruction, "RES 0, H"));
+        m.insert(0x8C, ((|cpu: &mut CPU| { res_h(cpu, 1); 8 }) as Instruction, "RES 1, H"));
+        m.insert(0x94, ((|cpu: &mut CPU| { res_h(cpu, 2); 8 }) as Instruction, "RES 2, H"));
+        m.insert(0x9C, ((|cpu: &mut CPU| { res_h(cpu, 3); 8 }) as Instruction, "RES 3, H"));
+        m.insert(0xA4, ((|cpu: &mut CPU| { res_h(cpu, 4); 8 }) as Instruction, "RES 4, H"));
+        m.insert(0xAC, ((|cpu: &mut CPU| { res_h(cpu, 5); 8 }) as Instruction, "RES 5, H"));
+        m.insert(0xB4, ((|cpu: &mut CPU| { res_h(cpu, 6); 8 }) as Instruction, "RES 6, H"));
+        m.insert(0xBC, ((|cpu: &mut CPU| { res_h(cpu, 7); 8 }) as Instruction, "RES 7, H"));
+        m.insert(0x85, ((|cpu: &mut CPU| { res_l(cpu, 0); 8 }) as Instruction, "RES 0, L"));
+        m.insert(0x8D, ((|cpu: &mut CPU| { res_l(cpu, 1); 8 }) as Instruction, "RES 1, L"));
+        m.insert(0x95, ((|cpu: &mut CPU| { res_l(cpu, 2); 8 }) as Instruction, "RES 2, L"));
+        m.insert(0x9D, ((|cpu: &mut CPU| { res_l(cpu, 3); 8 }) as Instruction, "RES 3, L"));
+        m.insert(0xA5, ((|cpu: &mut CPU| { res_l(cpu, 4); 8 }) as Instruction, "RES 4, L"));
+        m.insert(0xAD, ((|cpu: &mut CPU| { res_l(cpu, 5); 8 }) as Instruction, "RES 5, L"));
+        m.insert(0xB5, ((|cpu: &mut CPU| { res_l(cpu, 6); 8 }) as Instruction, "RES 6, L"));
+        m.insert(0xBD, ((|cpu: &mut CPU| { res_l(cpu, 7); 8 }) as Instruction, "RES 7, L"));
+        m.insert(0x86, ((|cpu: &mut CPU| { res_hl(cpu, 0); 16 }) as Instruction, "RES 0, HL"));
+        m.insert(0x8E, ((|cpu: &mut CPU| { res_hl(cpu, 1); 16 }) as Instruction, "RES 1, HL"));
+        m.insert(0x96, ((|cpu: &mut CPU| { res_hl(cpu, 2); 16 }) as Instruction, "RES 2, HL"));
+        m.insert(0x9E, ((|cpu: &mut CPU| { res_hl(cpu, 3); 16 }) as Instruction, "RES 3, HL"));
+        m.insert(0xA6, ((|cpu: &mut CPU| { res_hl(cpu, 4); 16 }) as Instruction, "RES 4, HL"));
+        m.insert(0xAE, ((|cpu: &mut CPU| { res_hl(cpu, 5); 16 }) as Instruction, "RES 5, HL"));
+        m.insert(0xB6, ((|cpu: &mut CPU| { res_hl(cpu, 6); 16 }) as Instruction, "RES 6, HL"));
+        m.insert(0xBE, ((|cpu: &mut CPU| { res_hl(cpu, 7); 16 }) as Instruction, "RES 7, HL"));
 
         m
     };
@@ -3911,68 +4016,120 @@ fn bit_hl(cpu: &mut CPU, bit: u8)
     cpu.flags.h = true;
 }
 
+/// Set a bit in 'A'
 fn set_a(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.a;
+    cpu.regs.a = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'B'
 fn set_b(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.b;
+    cpu.regs.b = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'C'
 fn set_c(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.c;
+    cpu.regs.c = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'D'
 fn set_d(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.d;
+    cpu.regs.d = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'E'
 fn set_e(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.e;
+    cpu.regs.e = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'H'
 fn set_h(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.h;
+    cpu.regs.h = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'L'
 fn set_l(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.l;
+    cpu.regs.l = v | (1u8 << (bit as usize));
 }
 
+/// Set a bit in 'HL'
 fn set_hl(cpu: &mut CPU, bit: u8)
 {
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = n | (1u8 << (bit as usize));
+    cpu.store_byte(hl, v);
 }
 
+/// Clear a bit in A
 fn res_a(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.a;
+    cpu.regs.a = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in B
 fn res_b(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.b;
+    cpu.regs.b = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in C
 fn res_c(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.c;
+    cpu.regs.c = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in D
 fn res_d(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.d;
+    cpu.regs.d = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in E
 fn res_e(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.e;
+    cpu.regs.e = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in H
 fn res_h(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.h;
+    cpu.regs.h = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in L
 fn res_l(cpu: &mut CPU, bit: u8)
 {
+    let v = cpu.regs.l;
+    cpu.regs.l = v & !(1u8 << (bit as usize));
 }
 
+/// Clear a bit in HL
 fn res_hl(cpu: &mut CPU, bit: u8)
 {
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = n & !(1u8 << (bit as usize));
+    cpu.store_byte(hl, v);
 }
 
 /// Jump to address at the two byte immediate value nn
@@ -3981,4 +4138,313 @@ fn jp_nn(cpu: &mut CPU) -> u8
     let addr = cpu.next_word();
     cpu.regs.pc = addr;
     12
+}
+
+/// Jump to absolute address nn if !Z
+fn jp_nz_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if !cpu.flags.z
+    {
+        cpu.regs.pc = addr;
+    }
+
+    12
+}
+
+/// Jump to absolute address nn if Z
+fn jp_z_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if cpu.flags.z
+    {
+        cpu.regs.pc = addr;
+    }
+
+    12
+}
+
+/// Jump to absolute address nn if !C
+fn jp_nc_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if !cpu.flags.c
+    {
+        cpu.regs.pc = addr;
+    }
+
+    12
+}
+
+/// Jump to absolute address nn if C
+fn jp_c_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if cpu.flags.c
+    {
+        cpu.regs.pc = addr;
+    }
+
+    12
+}
+
+/// Jump to address stored in HL
+fn jp_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    cpu.regs.pc = hl;
+    4
+}
+
+/// Add next immediate byte to current address and jump to it
+fn jr_n(cpu: &mut CPU) -> u8
+{
+    let off = cpu.next_byte() as i8;
+    let mut pc = cpu.regs.pc as i16;
+    pc = pc + off as i16;
+    cpu.regs.pc = pc as u16;
+    8
+}
+
+/// Add next immediate byte to current address and jump to it if !Z
+fn jr_nz(cpu: &mut CPU) -> u8
+{
+    let off = cpu.next_byte() as i8;
+    if !cpu.flags.z
+    {
+        let mut pc = cpu.regs.pc as i16;
+        pc = pc + off as i16;
+        cpu.regs.pc = pc as u16;
+    }
+
+    8
+}
+
+/// Add next immediate byte to current address and jump to it if Z
+fn jr_z(cpu: &mut CPU) -> u8
+{
+    let off = cpu.next_byte() as i8;
+    if cpu.flags.z
+    {
+        let mut pc = cpu.regs.pc as i16;
+        pc = pc + off as i16;
+        cpu.regs.pc = pc as u16;
+    }
+
+    8
+}
+
+/// Add next immediate byte to current address and jump to it if !C
+fn jr_nc(cpu: &mut CPU) -> u8
+{
+    let off = cpu.next_byte() as i8;
+    if !cpu.flags.c
+    {
+        let mut pc = cpu.regs.pc as i16;
+        pc = pc + off as i16;
+        cpu.regs.pc = pc as u16;
+    }
+
+    8
+}
+
+/// Add next immediate byte to current address and jump to it if C
+fn jr_c(cpu: &mut CPU) -> u8
+{
+    let off = cpu.next_byte() as i8;
+    if cpu.flags.c
+    {
+        let mut pc = cpu.regs.pc as i16;
+        pc = pc + off as i16;
+        cpu.regs.pc = pc as u16;
+    }
+
+    8
+}
+
+/// Push return address on stack and jump to immediate address
+fn call_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    let pc = cpu.regs.pc;
+    cpu.push_word(pc);
+    cpu.regs.pc = addr;
+    12
+}
+
+/// Push return address on stack and jump to immediate address if !Z
+fn call_nz_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if !cpu.flags.z
+    {
+        let pc = cpu.regs.pc;
+        cpu.push_word(pc);
+        cpu.regs.pc = addr;
+    }
+    12
+}
+
+/// Push return address on stack and jump to immediate address if Z
+fn call_z_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if cpu.flags.z
+    {
+        let pc = cpu.regs.pc;
+        cpu.push_word(pc);
+        cpu.regs.pc = addr;
+    }
+    12
+}
+
+/// Push return address on stack and jump to immediate address if !C
+fn call_nc_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if !cpu.flags.c
+    {
+        let pc = cpu.regs.pc;
+        cpu.push_word(pc);
+        cpu.regs.pc = addr;
+    }
+    12
+}
+
+/// Push return address on stack and jump to immediate address if C
+fn call_c_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    if cpu.flags.c
+    {
+        let pc = cpu.regs.pc;
+        cpu.push_word(pc);
+        cpu.regs.pc = addr;
+    }
+    12
+}
+
+/// Helper function for RST instructions
+fn rst(cpu: &mut CPU, addr: u16)
+{
+    let pc = cpu.regs.pc;
+    cpu.push_word(pc);
+    cpu.regs.pc = addr;
+}
+
+/// Push return address on to stack and jump to 0x00
+fn rst_00h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x00);
+    32
+}
+
+/// Push return address on to stack and jump to 0x08
+fn rst_08h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x08);
+    32
+}
+
+/// Push return address on to stack and jump to 0x10
+fn rst_10h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x10);
+    32
+}
+
+/// Push return address on to stack and jump to 0x18
+fn rst_18h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x18);
+    32
+}
+
+/// Push return address on to stack and jump to 0x20
+fn rst_20h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x20);
+    32
+}
+
+/// Push return address on to stack and jump to 0x28
+fn rst_28h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x28);
+    32
+}
+
+/// Push return address on to stack and jump to 0x30
+fn rst_30h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x30);
+    32
+}
+
+/// Push return address on to stack and jump to 0x38
+fn rst_38h(cpu: &mut CPU) -> u8
+{
+    rst(cpu, 0x38);
+    32
+}
+
+/// Pop return address from stack and jump to it
+fn ret(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.pop_word();
+    cpu.regs.pc = addr;
+    8
+}
+
+/// Pop return address from stack and jump to it if !Z
+fn ret_nz(cpu: &mut CPU) -> u8
+{
+    if !cpu.flags.z
+    {
+        let addr = cpu.pop_word();
+        cpu.regs.pc = addr;
+    }
+    8
+}
+
+/// Pop return address from stack and jump to it if Z
+fn ret_z(cpu: &mut CPU) -> u8
+{
+    if cpu.flags.z
+    {
+        let addr = cpu.pop_word();
+        cpu.regs.pc = addr;
+    }
+    8
+}
+
+/// Pop return address from stack and jump to it if !C
+fn ret_nc(cpu: &mut CPU) -> u8
+{
+    if !cpu.flags.c
+    {
+        let addr = cpu.pop_word();
+        cpu.regs.pc = addr;
+    }
+    8
+}
+
+/// Pop return address from stack and jump to it if C
+fn ret_c(cpu: &mut CPU) -> u8
+{
+    if cpu.flags.c
+    {
+        let addr = cpu.pop_word();
+        cpu.regs.pc = addr;
+    }
+    8
+}
+
+/// Pop return address from stack and jump to it then enable interrupts
+fn reti(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.pop_word();
+    cpu.regs.pc = addr;
+    cpu.enable_interrupts();
+    8
 }
