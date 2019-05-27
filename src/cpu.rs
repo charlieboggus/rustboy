@@ -159,13 +159,13 @@ impl CPU
     {
         // Get the next opcode from memory
         let mut op = self.fetch_byte(self.regs.pc);
+        self.regs.pc += 1;
 
         // Check if the opcode is a prefixed opcode
         if op != 0xCB
         {
             // If it's not we can just get the instruction from the regular
             // opcode hashmap
-            self.regs.pc += 1;
             if let Some((instruction, _)) = OPCODES.get(&op)
             {
                 *instruction
@@ -179,9 +179,9 @@ impl CPU
         {
             // If it is we have to fetch the next byte and use it to search for
             // an instruction in the prefixed opcode hashmap
-            self.regs.pc += 1;
             op = self.fetch_byte(self.regs.pc);
             self.regs.pc += 1;
+            
             if let Some((instruction, _)) = OPCODES_CB.get(&op)
             {
                 *instruction
@@ -615,6 +615,55 @@ lazy_static!
         m.insert(0x0F, (rrca as Instruction, "RRCA"));
         m.insert(0x1F, (rra as Instruction, "RRA"));
 
+        // ------------------------------- Jumps -------------------------------
+
+        m.insert(0xC3, (jp as Instruction, "JP"));
+
+        m.insert(0xC2, (jp_nz_nn as Instruction, "JP Z, nn"));
+        m.insert(0xCA, (jp_z_nn as Instruction, "JP Z, nn"));
+        m.insert(0xD2, (jp_nc_nn as Instruction, "JP NC, nn"));
+        m.insert(0xDA, (jp_c_nn as Instruction, "JP C, nn"));
+
+        m.insert(0xE9, (jp_hl as Instruction, "JP HL"));
+
+        m.insert(0x18, (jr_n as Instruction, "JR n"));
+
+        m.insert(0x20, (jr_nz as Instruction, "JR NZ, *"));
+        m.insert(0x28, (jr_z as Instruction, "JR Z, *"));
+        m.insert(0x30, (jr_nc as Instruction, "JR NC, *"));
+        m.insert(0x38, (jr_c as Instruction, "JR C, *"));
+
+        // ------------------------------- Calls -------------------------------
+
+        m.insert(0xCD, (call_nn as Instruction, "CALL nn"));
+
+        m.insert(0xC4, (call_nz_nn as Instruction, "CALL NZ, nn"));
+        m.insert(0xCC, (call_z_nn as Instruction, "CALL Z, nn"));
+        m.insert(0xD4, (call_nc_nn as Instruction, "CALL NC, nn"));
+        m.insert(0xDC, (call_c_nn as Instruction, "CALL C, nn"));
+
+        // ----------------------------- Restarts ------------------------------
+
+        m.insert(0xC7, (rst_00h as Instruction, "RST 00H"));
+        m.insert(0xCF, (rst_08h as Instruction, "RST 08H"));
+        m.insert(0xD7, (rst_10h as Instruction, "RST 10H"));
+        m.insert(0xDF, (rst_18h as Instruction, "RST 18H"));
+        m.insert(0xE7, (rst_20h as Instruction, "RST 20H"));
+        m.insert(0xEF, (rst_28h as Instruction, "RST 28H"));
+        m.insert(0xF7, (rst_30h as Instruction, "RST 30H"));
+        m.insert(0xFF, (rst_38h as Instruction, "RST 38H"));
+
+        // ----------------------------- Returns -------------------------------
+
+        m.insert(0xC9, (ret as Instruction, "RET"));
+
+        m.insert(0xC0, (ret_nz as Instruction, "RET NZ"));
+        m.insert(0xC8, (ret_z as Instruction, "RET Z"));
+        m.insert(0xD0, (ret_nc as Instruction, "RET NC"));
+        m.insert(0xD8, (ret_c as Instruction, "RET C"));
+
+        m.insert(0xD9, (reti as Instruction, "RETI"));
+
         m
     };
 
@@ -633,6 +682,96 @@ lazy_static!
         m.insert(0x34, (swap_h as Instruction, "SWAP H"));
         m.insert(0x35, (swap_l as Instruction, "SWAP L"));
         m.insert(0x36, (swap_hl as Instruction, "SWAP HL"));
+
+        m.insert(0x07, (rlc_a as Instruction, "RLC A"));
+        m.insert(0x00, (rlc_b as Instruction, "RLC B"));
+        m.insert(0x01, (rlc_c as Instruction, "RLC C"));
+        m.insert(0x02, (rlc_d as Instruction, "RLC D"));
+        m.insert(0x03, (rlc_e as Instruction, "RLC E"));
+        m.insert(0x04, (rlc_h as Instruction, "RLC H"));
+        m.insert(0x05, (rlc_l as Instruction, "RLC L"));
+        m.insert(0x06, (rlc_hl as Instruction, "RLC HL"));
+
+        m.insert(0x17, (rl_a as Instruction, "RL A"));
+        m.insert(0x10, (rl_b as Instruction, "RL B"));
+        m.insert(0x11, (rl_c as Instruction, "RL C"));
+        m.insert(0x12, (rl_d as Instruction, "RL D"));
+        m.insert(0x13, (rl_e as Instruction, "RL E"));
+        m.insert(0x14, (rl_h as Instruction, "RL H"));
+        m.insert(0x15, (rl_l as Instruction, "RL L"));
+        m.insert(0x16, (rl_hl as Instruction, "RL HL"));
+
+        m.insert(0x0F, (rrc_a as Instruction, "RRC A"));
+        m.insert(0x08, (rrc_b as Instruction, "RRC B"));
+        m.insert(0x09, (rrc_c as Instruction, "RRC C"));
+        m.insert(0x0A, (rrc_d as Instruction, "RRC D"));
+        m.insert(0x0B, (rrc_e as Instruction, "RRC E"));
+        m.insert(0x0C, (rrc_h as Instruction, "RRC H"));
+        m.insert(0x0D, (rrc_l as Instruction, "RRC L"));
+        m.insert(0x0E, (rrc_hl as Instruction, "RRC HL"));
+
+        m.insert(0x1F, (rr_a as Instruction, "RR A"));
+        m.insert(0x18, (rr_b as Instruction, "RR B"));
+        m.insert(0x19, (rr_c as Instruction, "RR C"));
+        m.insert(0x1A, (rr_d as Instruction, "RR D"));
+        m.insert(0x1B, (rr_e as Instruction, "RR E"));
+        m.insert(0x1C, (rr_h as Instruction, "RR H"));
+        m.insert(0x1D, (rr_l as Instruction, "RR L"));
+        m.insert(0x1E, (rr_hl as Instruction, "RR HL"));
+
+        m.insert(0x27, (sla_a as Instruction, "SLA A"));
+        m.insert(0x20, (sla_b as Instruction, "SLA B"));
+        m.insert(0x21, (sla_c as Instruction, "SLA C"));
+        m.insert(0x22, (sla_d as Instruction, "SLA D"));
+        m.insert(0x23, (sla_e as Instruction, "SLA E"));
+        m.insert(0x24, (sla_h as Instruction, "SLA H"));
+        m.insert(0x25, (sla_l as Instruction, "SLA L"));
+        m.insert(0x26, (sla_hl as Instruction, "SLA HL"));
+
+        m.insert(0x2F, (sra_a as Instruction, "SRA A"));
+        m.insert(0x28, (sra_b as Instruction, "SRA B"));
+        m.insert(0x29, (sra_c as Instruction, "SRA C"));
+        m.insert(0x2A, (sra_d as Instruction, "SRA D"));
+        m.insert(0x2B, (sra_e as Instruction, "SRA E"));
+        m.insert(0x2C, (sra_h as Instruction, "SRA H"));
+        m.insert(0x2D, (sra_l as Instruction, "SRA L"));
+        m.insert(0x2E, (sra_hl as Instruction, "SRA HL"));
+
+        m.insert(0x3F, (srl_a as Instruction, "SRL A"));
+        m.insert(0x38, (srl_b as Instruction, "SRL B"));
+        m.insert(0x39, (srl_c as Instruction, "SRL C"));
+        m.insert(0x3A, (srl_d as Instruction, "SRL D"));
+        m.insert(0x3B, (srl_e as Instruction, "SRL E"));
+        m.insert(0x2C, (srl_h as Instruction, "SRL H"));
+        m.insert(0x3D, (srl_l as Instruction, "SRL L"));
+        m.insert(0x3E, (srl_hl as Instruction, "SRL HL"));
+
+        m.insert(0x47, (bit_b_a as Instruction, "BIT b, A"));
+        m.insert(0x40, (bit_b_b as Instruction, "BIT b, B"));
+        m.insert(0x41, (bit_b_c as Instruction, "BIT b, C"));
+        m.insert(0x42, (bit_b_d as Instruction, "BIT b, D"));
+        m.insert(0x43, (bit_b_e as Instruction, "BIT b, E"));
+        m.insert(0x44, (bit_b_h as Instruction, "BIT b, H"));
+        m.insert(0x45, (bit_b_l as Instruction, "BIT b, L"));
+        m.insert(0x46, (bit_b_hl as Instruction, "BIT b, HL"));
+
+        m.insert(0xC7, (set_b_a as Instruction, "SET b, A"));
+        m.insert(0xC0, (set_b_b as Instruction, "SET b, B"));
+        m.insert(0xC1, (set_b_c as Instruction, "SET b, C"));
+        m.insert(0xC2, (set_b_d as Instruction, "SET b, D"));
+        m.insert(0xC3, (set_b_e as Instruction, "SET b, E"));
+        m.insert(0xC4, (set_b_h as Instruction, "SET b, H"));
+        m.insert(0xC5, (set_b_l as Instruction, "SET b, L"));
+        m.insert(0xC6, (set_b_hl as Instruction, "SET b, HL"));
+
+        m.insert(0x87, (res_b_a as Instruction, "RES b, A"));
+        m.insert(0x80, (res_b_b as Instruction, "RES b, B"));
+        m.insert(0x81, (res_b_c as Instruction, "RES b, C"));
+        m.insert(0x82, (res_b_d as Instruction, "RES b, D"));
+        m.insert(0x83, (res_b_e as Instruction, "RES b, E"));
+        m.insert(0x84, (res_b_h as Instruction, "RES b, H"));
+        m.insert(0x85, (res_b_l as Instruction, "RES b, L"));
+        m.insert(0x86, (res_b_hl as Instruction, "RES b, HL"));
 
         m
     };
@@ -3019,4 +3158,265 @@ fn rra(cpu: &mut CPU) -> u8
     cpu.flags.n = false;
     cpu.flags.h = false;
     4
+}
+
+/// Helper function to rotate a byte left and update CPU flags register
+fn rlc(cpu: &mut CPU, v: u8) -> u8
+{
+    cpu.flags.c = v & 0x80 != 0;
+
+    let r = (v << 1) | (v >> 7);
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Rotate A left. Old bit is used for carry flag.
+fn rlc_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let r = rlc(cpu, a);
+    cpu.regs.a = r;
+    8
+}
+
+/// Rotate B left. Old bit is used for carry flag.
+fn rlc_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    let r = rlc(cpu, b);
+    cpu.regs.b = r;
+    8
+}
+
+/// Rotate C left. Old bit is used for carry flag.
+fn rlc_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    let r = rlc(cpu, c);
+    cpu.regs.c = r;
+    8
+}
+
+/// Rotate D left. Old bit is used for carry flag.
+fn rlc_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    let r = rlc(cpu, d);
+    cpu.regs.d = r;
+    8
+}
+
+/// Rotate E left. Old bit is used for carry flag.
+fn rlc_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    let r = rlc(cpu, e);
+    cpu.regs.e = r;
+    8
+}
+
+/// Rotate H left. Old bit is used for carry flag.
+fn rlc_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    let r = rlc(cpu, h);
+    cpu.regs.h = r;
+    8
+}
+
+/// Rotate L left. Old bit is used for carry flag.
+fn rlc_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    let r = rlc(cpu, l);
+    cpu.regs.l = r;
+    8
+}
+
+/// Rotate HL left. Old bit is used for carry flag.
+fn rlc_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = rlc(cpu, n);
+    cpu.store_byte(hl, r);
+    16
+}
+
+/// Helper function to rotate a byte left through carry and update CPU flags
+fn rl(cpu: &mut CPU, v: u8) -> u8
+{
+    let old_c = cpu.flags.c as u8;
+    cpu.flags.c = v & 0x80 != 0;
+    let r = (v << 1) | old_c;
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Rotate A left through carry flag
+fn rl_a(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.a;
+    let r = rl(cpu, v);
+    cpu.regs.a = r;
+    8
+}
+
+/// Rotate B left through carry flag
+fn rl_b(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.b;
+    let r = rl(cpu, v);
+    cpu.regs.b = r;
+    8
+}
+
+/// Rotate C left through carry flag
+fn rl_c(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.c;
+    let r = rl(cpu, v);
+    cpu.regs.c = r;
+    8
+}
+
+/// Rotate D left through carry flag
+fn rl_d(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.d;
+    let r = rl(cpu, v);
+    cpu.regs.d = r;
+    8
+}
+
+/// Rotate E left through carry flag
+fn rl_e(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.e;
+    let r = rl(cpu, v);
+    cpu.regs.e = r;
+    8
+}
+
+/// Rotate H left through carry flag
+fn rl_h(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.h;
+    let r = rl(cpu, v);
+    cpu.regs.h = r;
+    8
+}
+
+/// Rotate L left through carry flag
+fn rl_l(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.l;
+    let r = rl(cpu, v);
+    cpu.regs.l = r;
+    8
+}
+
+/// Rotate HL left through carry flag
+fn rl_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = rl(cpu, n);
+    cpu.store_byte(hl, r);
+    16
+}
+
+/// Helper function to rotate a byte right and update CPU flags register
+fn rrc(cpu: &mut CPU, v: u8) -> u8
+{
+    cpu.flags.c = v & 1 != 0;
+
+    let r = (v >> 1) | (v << 7);
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Rotate A to the right
+fn rrc_a(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.a;
+    let r = rrc(cpu, v);
+    cpu.regs.a = r;
+    8
+}
+
+/// Rotate B to the right
+fn rrc_b(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.b;
+    let r = rrc(cpu, v);
+    cpu.regs.b = r;
+    8
+}
+
+/// Rotate C to the right
+fn rrc_c(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.c;
+    let r = rrc(cpu, v);
+    cpu.regs.c = r;
+    8
+}
+
+/// Rotate D to the right
+fn rrc_d(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.d;
+    let r = rrc(cpu, v);
+    cpu.regs.d = r;
+    8
+}
+
+/// Rotate E to the right
+fn rrc_e(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.e;
+    let r = rrc(cpu, v);
+    cpu.regs.e = r;
+    8
+}
+
+/// Rotate H to the right
+fn rrc_h(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.h;
+    let r = rrc(cpu, v);
+    cpu.regs.h = r;
+    8
+}
+
+/// Rotate L to the right
+fn rrc_l(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.l;
+    let r = rrc(cpu, v);
+    cpu.regs.l = r;
+    8
+}
+
+/// Rotate HL to the right
+fn rrc_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = rrc(cpu, n);
+    cpu.store_byte(hl, r);
+    16
 }
