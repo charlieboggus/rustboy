@@ -473,6 +473,46 @@ lazy_static!
         m.insert(0x86, (add_a_hl as Instruction, "ADD A, HL"));
         m.insert(0xC6, (add_a_n as Instruction, "ADD A, #"));
 
+        m.insert(0x8F, (adc_a_a as Instruction, "ADC A, A"));
+        m.insert(0x88, (adc_a_b as Instruction, "ADC A, B"));
+        m.insert(0x89, (adc_a_c as Instruction, "ADC A, C"));
+        m.insert(0x8A, (adc_a_d as Instruction, "ADC A, D"));
+        m.insert(0x8B, (adc_a_e as Instruction, "ADC A, E"));
+        m.insert(0x8C, (adc_a_h as Instruction, "ADC A, H"));
+        m.insert(0x8D, (adc_a_l as Instruction, "ADC A, L"));
+        m.insert(0x8E, (adc_a_hl as Instruction, "ADC A, HL"));
+        m.insert(0xCE, (adc_a_n as Instruction, "ADC A, #"));
+
+        m.insert(0x97, (sub_a_a as Instruction, "SUB A, A"));
+        m.insert(0x90, (sub_a_b as Instruction, "SUB A, B"));
+        m.insert(0x91, (sub_a_c as Instruction, "SUB A, C"));
+        m.insert(0x92, (sub_a_d as Instruction, "SUB A, D"));
+        m.insert(0x93, (sub_a_e as Instruction, "SUB A, E"));
+        m.insert(0x94, (sub_a_h as Instruction, "SUB A, H"));
+        m.insert(0x95, (sub_a_l as Instruction, "SUB A, L"));
+        m.insert(0x96, (sub_a_hl as Instruction, "SUB A, HL"));
+        m.insert(0xD6, (sub_a_n as Instruction, "SUB A, #"));
+
+        m.insert(0x9F, (sbc_a_a as Instruction, "SBC A, A"));
+        m.insert(0x98, (sbc_a_b as Instruction, "SBC A, B"));
+        m.insert(0x99, (sbc_a_c as Instruction, "SBC A, C"));
+        m.insert(0x9A, (sbc_a_d as Instruction, "SBC A, D"));
+        m.insert(0x9B, (sbc_a_e as Instruction, "SBC A, E"));
+        m.insert(0x9C, (sbc_a_h as Instruction, "SBC A, H"));
+        m.insert(0x9D, (sbc_a_l as Instruction, "SBC A, L"));
+        m.insert(0x9E, (sbc_a_hl as Instruction, "SBC A, HL"));
+        m.insert(0xDE, (sbc_a_n as Instruction, "SBC A, #"));
+
+        m.insert(0xA7, (and_a_a as Instruction, "AND A, A"));
+        m.insert(0xA0, (and_a_b as Instruction, "AND A, B"));
+        m.insert(0xA1, (and_a_c as Instruction, "AND A, C"));
+        m.insert(0xA2, (and_a_d as Instruction, "AND A, D"));
+        m.insert(0xA3, (and_a_e as Instruction, "AND A, E"));
+        m.insert(0xA4, (and_a_h as Instruction, "AND A, H"));
+        m.insert(0xA5, (and_a_l as Instruction, "AND A, L"));
+        m.insert(0xA6, (and_a_hl as Instruction, "AND A, HL"));
+        m.insert(0xE6, (and_a_n as Instruction, "AND A, #"));
+
         m
     };
 }
@@ -1404,6 +1444,7 @@ fn add_a_l(cpu: &mut CPU) -> u8
     let a = cpu.regs.a;
     let l = cpu.regs.l;
     let v = add_and_update_flags(cpu, a, l);
+    cpu.regs.a = v;
     4
 }
 
@@ -1424,6 +1465,470 @@ fn add_a_n(cpu: &mut CPU) -> u8
     let a = cpu.regs.a;
     let n = cpu.next_byte();
     let v = add_and_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// Helper function to add two bytes with carry and update the CPU flags register
+fn add_with_carry_update_flags(cpu: &mut CPU, b1: u8, b2: u8) -> u8
+{
+    let b1 = b1 as u32;
+    let b2 = b2 as u32;
+    let carry = cpu.flags.c as u32;
+    let result = b1 + b2 + carry;
+    let result_u8 = result as u8;
+
+    cpu.flags.z = result_u8 == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = (b1 ^ b2 ^ result) & 0x10 != 0;
+    cpu.flags.c = result & 0x100 != 0;
+
+    result_u8
+}
+
+/// Add ['A' + carry] to 'A'
+fn adc_a_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let v = add_with_carry_update_flags(cpu, a, a);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['B' + carry] to 'A'
+fn adc_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    let v = add_with_carry_update_flags(cpu, a, b);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['C' + carry] to 'A'
+fn adc_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    let v = add_with_carry_update_flags(cpu, a, c);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['D' + carry] to 'A'
+fn adc_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    let v = add_with_carry_update_flags(cpu, a, d);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['E' + carry] to 'A'
+fn adc_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    let v = add_with_carry_update_flags(cpu, a, e);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['H' + carry] to 'A'
+fn adc_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    let v = add_with_carry_update_flags(cpu, a, h);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['L' + carry] to 'A'
+fn adc_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    let v = add_with_carry_update_flags(cpu, a, l);
+    cpu.regs.a = v;
+    4
+}
+
+/// Add ['HL' + carry] to 'A'
+fn adc_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = add_with_carry_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// Add [next immediate byte + carry] to 'A'
+fn adc_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    let v = add_with_carry_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// Helper function to subtract two bytes and update the CPU flags register
+/// and return the result of the subtraction as a single byte
+fn sub_and_update_flags(cpu: &mut CPU, b1: u8, b2: u8) -> u8
+{
+    let b1 = b1 as u32;
+    let b2 = b2 as u32;
+    let result = b1 - b2;
+    let result_u8 = result as u8;
+
+    cpu.flags.z = result_u8 == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = (b1 ^ b2 ^ result) & 0x10 != 0;
+    cpu.flags.c = result & 0x100 != 0;
+
+    result_u8
+}
+
+/// Subtract 'A' from 'A'
+fn sub_a_a(cpu: &mut CPU) -> u8
+{
+    cpu.flags.z = true;
+    cpu.flags.n = true;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+    cpu.regs.a = 0;
+    4
+}
+
+/// Subtract 'B' from 'A'
+fn sub_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    let v = sub_and_update_flags(cpu, a, b);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract 'C' from 'A'
+fn sub_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    let v = sub_and_update_flags(cpu, a, c);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract 'D' from 'A'
+fn sub_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    let v = sub_and_update_flags(cpu, a, d);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract 'E' from 'A'
+fn sub_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    let v = sub_and_update_flags(cpu, a, e);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract 'H' from 'A'
+fn sub_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    let v = sub_and_update_flags(cpu, a, h);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract 'B' from 'A'
+fn sub_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    let v = sub_and_update_flags(cpu, a, l);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract 'HL' from 'A'
+fn sub_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = sub_and_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// Subtract the next immediate byte from 'A'
+fn sub_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    let v = sub_and_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// Helper function to subtract two bytes with carry and update the CPU flags
+/// register and then return the result of the subtraction as a single byte
+fn sub_with_carry_update_flags(cpu: &mut CPU, b1: u8, b2: u8) -> u8
+{
+    let b1 = b1 as u32;
+    let b2 = b2 as u32;
+    let carry = cpu.flags.c as u32;
+    let result = b1 - b2 - carry;
+    let result_u8 = result as u8;
+
+    cpu.flags.z = result_u8 == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = (b1 ^ b2 ^ result) & 0x10 != 0;
+    cpu.flags.c = result & 0x100 != 0;
+
+    result_u8
+}
+
+/// Subtract ['A' + carry] from 'A'
+fn sbc_a_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let v = sub_with_carry_update_flags(cpu, a, a);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['B' + carry] from 'A'
+fn sbc_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    let v = sub_with_carry_update_flags(cpu, a, b);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['C' + carry] from 'A'
+fn sbc_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    let v = sub_with_carry_update_flags(cpu, a, c);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['D' + carry] from 'A'
+fn sbc_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    let v = sub_with_carry_update_flags(cpu, a, d);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['E' + carry] from 'A'
+fn sbc_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    let v = sub_with_carry_update_flags(cpu, a, e);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['H' + carry] from 'A'
+fn sbc_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    let v = sub_with_carry_update_flags(cpu, a, h);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['L' + carry] from 'A'
+fn sbc_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    let v = sub_with_carry_update_flags(cpu, a, l);
+    cpu.regs.a = v;
+    4
+}
+
+/// Subtract ['HL' + carry] from 'A'
+fn sbc_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = sub_with_carry_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// Subtract [next immediate byte + carry] from 'A'
+fn sbc_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    let v = sub_with_carry_update_flags(cpu, a, n);
+    cpu.regs.a = v;
+    8
+}
+
+/// AND 'A' with 'A'
+fn and_a_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.flags.z = a == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+    4
+}
+
+/// AND 'B' with 'A'
+fn and_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    let v = a & b;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// AND 'C' with 'A'
+fn and_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    let v = a & c;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// AND 'D' with 'A'
+fn and_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    let v = a & d;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// AND 'E' with 'A'
+fn and_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    let v = a & e;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// AND 'H' with 'A'
+fn and_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    let v = a & h;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// AND 'L' with 'A'
+fn and_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    let v = a & l;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// AND 'HL' with 'A'
+fn and_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = a & n;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    8
+}
+
+/// AND the next immediate byte with 'A'
+fn and_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    let v = a & n;
+    
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+    cpu.flags.c = false;
+
     cpu.regs.a = v;
     8
 }
