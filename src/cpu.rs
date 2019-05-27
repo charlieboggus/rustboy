@@ -472,7 +472,6 @@ lazy_static!
         m.insert(0x85, (add_a_l as Instruction, "ADD A, L"));
         m.insert(0x86, (add_a_hl as Instruction, "ADD A, HL"));
         m.insert(0xC6, (add_a_n as Instruction, "ADD A, #"));
-
         m.insert(0x8F, (adc_a_a as Instruction, "ADC A, A"));
         m.insert(0x88, (adc_a_b as Instruction, "ADC A, B"));
         m.insert(0x89, (adc_a_c as Instruction, "ADC A, C"));
@@ -482,7 +481,6 @@ lazy_static!
         m.insert(0x8D, (adc_a_l as Instruction, "ADC A, L"));
         m.insert(0x8E, (adc_a_hl as Instruction, "ADC A, HL"));
         m.insert(0xCE, (adc_a_n as Instruction, "ADC A, #"));
-
         m.insert(0x97, (sub_a_a as Instruction, "SUB A, A"));
         m.insert(0x90, (sub_a_b as Instruction, "SUB A, B"));
         m.insert(0x91, (sub_a_c as Instruction, "SUB A, C"));
@@ -492,7 +490,6 @@ lazy_static!
         m.insert(0x95, (sub_a_l as Instruction, "SUB A, L"));
         m.insert(0x96, (sub_a_hl as Instruction, "SUB A, HL"));
         m.insert(0xD6, (sub_a_n as Instruction, "SUB A, #"));
-
         m.insert(0x9F, (sbc_a_a as Instruction, "SBC A, A"));
         m.insert(0x98, (sbc_a_b as Instruction, "SBC A, B"));
         m.insert(0x99, (sbc_a_c as Instruction, "SBC A, C"));
@@ -502,7 +499,6 @@ lazy_static!
         m.insert(0x9D, (sbc_a_l as Instruction, "SBC A, L"));
         m.insert(0x9E, (sbc_a_hl as Instruction, "SBC A, HL"));
         m.insert(0xDE, (sbc_a_n as Instruction, "SBC A, #"));
-
         m.insert(0xA7, (and_a_a as Instruction, "AND A, A"));
         m.insert(0xA0, (and_a_b as Instruction, "AND A, B"));
         m.insert(0xA1, (and_a_c as Instruction, "AND A, C"));
@@ -512,7 +508,6 @@ lazy_static!
         m.insert(0xA5, (and_a_l as Instruction, "AND A, L"));
         m.insert(0xA6, (and_a_hl as Instruction, "AND A, HL"));
         m.insert(0xE6, (and_a_n as Instruction, "AND A, #"));
-
         m.insert(0xB7, (or_a_a as Instruction, "OR A, A"));
         m.insert(0xB0, (or_a_b as Instruction, "OR A, B"));
         m.insert(0xB1, (or_a_c as Instruction, "OR A, C"));
@@ -522,7 +517,6 @@ lazy_static!
         m.insert(0xB5, (or_a_l as Instruction, "OR A, L"));
         m.insert(0xB6, (or_a_hl as Instruction, "OR A, HL"));
         m.insert(0xF6, (or_a_n as Instruction, "OR A, #"));
-
         m.insert(0xAF, (xor_a_a as Instruction, "XOR A, A"));
         m.insert(0xA8, (xor_a_b as Instruction, "XOR A, B"));
         m.insert(0xA9, (xor_a_c as Instruction, "XOR A, C"));
@@ -532,6 +526,49 @@ lazy_static!
         m.insert(0xAD, (xor_a_l as Instruction, "XOR A, L"));
         m.insert(0xAE, (xor_a_hl as Instruction, "XOR A, HL"));
         m.insert(0xEE, (xor_a_n as Instruction, "XOR A, #"));
+        m.insert(0xBF, (cp_a_a as Instruction, "CP A, A"));
+        m.insert(0xB8, (cp_a_b as Instruction, "CP A, B"));
+        m.insert(0xB9, (cp_a_c as Instruction, "CP A, C"));
+        m.insert(0xBA, (cp_a_d as Instruction, "CP A, D"));
+        m.insert(0xBB, (cp_a_e as Instruction, "CP A, E"));
+        m.insert(0xBC, (cp_a_h as Instruction, "CP A, H"));
+        m.insert(0xBD, (cp_a_l as Instruction, "CP A, L"));
+        m.insert(0xBE, (cp_a_hl as Instruction, "CP A, HL"));
+        m.insert(0xFE, (cp_a_n as Instruction, "CP A, #"));
+        m.insert(0x3C, (inc_a as Instruction, "INC A"));
+        m.insert(0x04, (inc_b as Instruction, "INC B"));
+        m.insert(0x0C, (inc_c as Instruction, "INC C"));
+        m.insert(0x14, (inc_d as Instruction, "INC D"));
+        m.insert(0x1C, (inc_e as Instruction, "INC E"));
+        m.insert(0x24, (inc_h as Instruction, "INC H"));
+        m.insert(0x2C, (inc_l as Instruction, "INC L"));
+        m.insert(0x34, (inc_hl as Instruction, "INC HL"));
+        m.insert(0x3D, (dec_a as Instruction, "DEC A"));
+        m.insert(0x05, (dec_b as Instruction, "DEC B"));
+        m.insert(0x0D, (dec_c as Instruction, "DEC C"));
+        m.insert(0x15, (dec_d as Instruction, "DEC D"));
+        m.insert(0x1D, (dec_e as Instruction, "DEC E"));
+        m.insert(0x25, (dec_h as Instruction, "DEC H"));
+        m.insert(0x2D, (dec_l as Instruction, "DEC L"));
+        m.insert(0x35, (dec_hl as Instruction, "DEC HL"));
+
+        // ------------------------- 16-bit Arithmetic -------------------------
+
+        m.insert(0x09, (add_hl_bc as Instruction, "ADD HL, BC"));
+        m.insert(0x19, (add_hl_de as Instruction, "ADD HL, DE"));
+        m.insert(0x29, (add_hl_hl as Instruction, "ADD HL, HL"));
+        m.insert(0x39, (add_hl_sp as Instruction, "ADD HL, SP"));
+        m.insert(0xE8, (add_sp_n as Instruction, "ADD SP, #"));
+        m.insert(0x03, (inc_bc as Instruction, "INC BC"));
+        m.insert(0x13, (inc_de as Instruction, "INC DE"));
+        m.insert(0x23, (inc_hl_16 as Instruction, "INC HL"));
+        m.insert(0x33, (inc_sp as Instruction, "INC SP"));
+        m.insert(0x0B, (dec_bc as Instruction, "DEC BC"));
+        m.insert(0x1B, (dec_de as Instruction, "DEC DE"));
+        m.insert(0x2B, (dec_hl_16 as Instruction, "DEC HL"));
+        m.insert(0x3B, (dec_sp as Instruction, "DEC SP"));
+
+        // ------------------------------- Misc. -------------------------------
 
         m
     };
@@ -2230,5 +2267,447 @@ fn xor_a_n(cpu: &mut CPU) -> u8
     cpu.flags.c = false;
 
     cpu.regs.a = v;
+    8
+}
+
+/// Compare 'A' with 'A'
+fn cp_a_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    sub_and_update_flags(cpu, a, a);
+    4
+}
+
+/// Compare 'A' with 'B'
+fn cp_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    sub_and_update_flags(cpu, a, b);
+    4
+}
+
+/// Compare 'A' with 'C'
+fn cp_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    sub_and_update_flags(cpu, a, c);
+    4
+}
+
+/// Compare 'A' with 'D'
+fn cp_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    sub_and_update_flags(cpu, a, d);
+    4
+}
+
+/// Compare 'A' with 'E'
+fn cp_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    sub_and_update_flags(cpu, a, e);
+    4
+}
+
+/// Compare 'A' with 'H'
+fn cp_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    sub_and_update_flags(cpu, a, h);
+    4
+}
+
+/// Compare 'A' with 'L'
+fn cp_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    sub_and_update_flags(cpu, a, l);
+    4
+}
+
+/// Compare 'A' with 'HL'
+fn cp_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    sub_and_update_flags(cpu, a, n);
+    8
+}
+
+/// Compare 'A' with the next immediate byte
+fn cp_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    sub_and_update_flags(cpu, a, n);
+    8
+}
+
+/// Increment 'A'
+fn inc_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let v = a + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = a & 0xF == 0xF;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// Increment 'B'
+fn inc_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    let v = b + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = b & 0xF == 0xF;
+
+    cpu.regs.b = v;
+    4
+}
+
+/// Increment 'C'
+fn inc_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    let v = c + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = c & 0xF == 0xF;
+
+    cpu.regs.c = v;
+    4
+}
+
+/// Increment 'D'
+fn inc_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    let v = d + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = d & 0xF == 0xF;
+
+    cpu.regs.d = v;
+    4
+}
+
+/// Increment 'E'
+fn inc_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    let v = e + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = e & 0xF == 0xF;
+
+    cpu.regs.e = v;
+    4
+}
+
+/// Increment 'H'
+fn inc_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    let v = h + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = h & 0xF == 0xF;
+
+    cpu.regs.h = v;
+    4
+}
+
+/// Increment 'L'
+fn inc_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    let v = l + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = l & 0xF == 0xF;
+
+    cpu.regs.l = v;
+    4
+}
+
+/// Increment 'HL'
+fn inc_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = n + 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = n & 0xF == 0xF;
+
+    cpu.store_byte(hl, v);
+    12
+}
+
+/// Decrement 'A'
+fn dec_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let v = a - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = a & 0xF == 0xF;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// Decrement 'B'
+fn dec_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    let v = b - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = b & 0xF == 0xF;
+
+    cpu.regs.b = v;
+    4
+}
+
+/// Decrement 'C'
+fn dec_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    let v = c - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = c & 0xF == 0xF;
+
+    cpu.regs.c = v;
+    4
+}
+
+/// Decrement 'D'
+fn dec_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    let v = d - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = d & 0xF == 0xF;
+
+    cpu.regs.d = v;
+    4
+}
+
+/// Decrement 'E'
+fn dec_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    let v = e - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = e & 0xF == 0xF;
+
+    cpu.regs.e = v;
+    4
+}
+
+/// Decrement 'H'
+fn dec_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    let v = h - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = h & 0xF == 0xF;
+
+    cpu.regs.h = v;
+    4
+}
+
+/// Decrement 'L'
+fn dec_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    let v = l - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = true;
+    cpu.flags.h = l & 0xF == 0xF;
+
+    cpu.regs.l = v;
+    4
+}
+
+/// Decrement 'HL'
+fn dec_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = n - 1;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = n & 0xF == 0xF;
+
+    cpu.store_byte(hl, v);
+    12
+}
+
+/// Helper function to add two words and update the CPU flags register
+/// then return the result of the addition as a single 2 byte word
+fn add_words_and_update_flags(cpu: &mut CPU, w1: u16, w2: u16) -> u16
+{
+    let w1 = w1 as u32;
+    let w2 = w2 as u32;
+    let v = w1 + w2;
+    
+    cpu.flags.n = false;
+    cpu.flags.h = (w1 ^ w2 ^ v) & 0x1000 != 0;
+    cpu.flags.c = v & 0x10000 != 0;
+
+    v as u16
+}
+
+/// Add 'BC' to 'HL'
+fn add_hl_bc(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let bc = cpu.bc();
+    let v = add_words_and_update_flags(cpu, hl, bc);
+    cpu.set_hl(v);
+    8
+}
+
+/// Add 'DE' to 'HL'
+fn add_hl_de(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let de = cpu.de();
+    let v = add_words_and_update_flags(cpu, hl, de);
+    cpu.set_hl(v);
+    8
+}
+
+/// Add 'HL' to 'HL'
+fn add_hl_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let v = add_words_and_update_flags(cpu, hl, hl);
+    cpu.set_hl(v);
+    8
+}
+
+/// Add Stack Pointer to 'HL'
+fn add_hl_sp(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let sp = cpu.regs.sp;
+    let v = add_words_and_update_flags(cpu, hl, sp);
+    cpu.set_hl(v);
+    8
+}
+
+/// Add the next immediate byte to the stack pointer
+fn add_sp_n(cpu: &mut CPU) -> u8
+{
+    let sp = cpu.regs.sp as i32;
+    let n = cpu.next_byte() as i8;
+    let nn = n as i32;
+    let v = sp + nn;
+
+    cpu.flags.z = false;
+    cpu.flags.n = false;
+    cpu.flags.h = (sp ^ nn ^ v) & 0x10 != 0;
+    cpu.flags.c = (sp ^ nn ^ v) & 0x100 != 0;
+
+    cpu.regs.sp = v as u16;
+    16
+}
+
+/// Increment 'BC'
+fn inc_bc(cpu: &mut CPU) -> u8
+{
+    let bc = cpu.bc();
+    cpu.set_bc(bc + 1);
+    8
+}
+
+/// Increment 'DE'
+fn inc_de(cpu: &mut CPU) -> u8
+{
+    let de = cpu.de();
+    cpu.set_de(de + 1);
+    8
+}
+
+/// Increment 'HL' using 16-bit arithmetic
+fn inc_hl_16(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    cpu.set_hl(hl + 1);
+    8
+}
+
+/// Increment the Stack Pointer
+fn inc_sp(cpu: &mut CPU) -> u8
+{
+    let sp = cpu.regs.sp;
+    cpu.regs.sp = sp + 1;
+    8
+}
+
+/// Decrement 'BC'
+fn dec_bc(cpu: &mut CPU) -> u8
+{
+    let bc = cpu.bc();
+    cpu.set_bc(bc - 1);
+    8
+}
+
+/// Decrement 'DE'
+fn dec_de(cpu: &mut CPU) -> u8
+{
+    let de = cpu.de();
+    cpu.set_de(de - 1);
+    8
+}
+
+/// Decrement 'HL' using 16-bit arithmetic
+fn dec_hl_16(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    cpu.set_hl(hl - 1);
+    8
+}
+
+/// Decrement the Stack Pointer
+fn dec_sp(cpu: &mut CPU) -> u8
+{
+    let sp = cpu.regs.sp;
+    cpu.regs.sp = sp - 1;
     8
 }
