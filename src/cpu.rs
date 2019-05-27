@@ -183,6 +183,14 @@ impl CPU
         b
     }
 
+    /// Returns the next immediate byte
+    fn next_byte(&mut self) -> u8
+    {
+        self.regs.pc += 1;
+        let b = self.fetch_byte(self.regs.pc);
+        b
+    }
+
     /// Store a byte at the given address. Takes one cycle.
     fn store_byte(&mut self, addr: u16, byte: u8)
     {
@@ -197,19 +205,28 @@ impl CPU
         self.store_byte(self.regs.sp, byte);
     }
 
-    /// Push two bytes onto the stack and decrement the stack pointer twice
-    fn push_word(&mut self, word: u16)
-    {
-        self.push_byte((word >> 8) as u8);
-        self.push_byte(word as u8);
-    }
-
     /// Pop a single byte from the stack and increment stack pointer
     fn pop_byte(&mut self) -> u8
     {
         let b = self.fetch_byte(self.regs.sp);
         self.regs.sp += 1;
         b
+    }
+
+    /// Returns the next immediate word
+    fn next_word(&mut self) -> u16
+    {
+        let b1 = self.next_byte() as u16;
+        let b2 = self.next_byte() as u16;
+
+        b1 | (b2 << 8)
+    }
+
+    /// Push two bytes onto the stack and decrement the stack pointer twice
+    fn push_word(&mut self, word: u16)
+    {
+        self.push_byte((word >> 8) as u8);
+        self.push_byte(word as u8);
     }
 
     /// Pops two bytes from the stack and increments stack pointer twice
@@ -314,6 +331,8 @@ impl CPU
     }
 }
 
+// ---------------------------- BEGIN INSTRUCTIONS -----------------------------
+
 lazy_static!
 {
     /// HashMap that indexes instruction function pointers and their names by opcode
@@ -348,6 +367,73 @@ lazy_static!
         m.insert(0x45, (ld_b_l as Instruction, "LD B, L"));
         m.insert(0x46, (ld_b_hl as Instruction, "LD B, (HL)"));
 
+        m.insert(0x48, (ld_c_b as Instruction, "LD C, B"));
+        m.insert(0x49, (ld_c_c as Instruction, "LD C, C"));
+        m.insert(0x4A, (ld_c_d as Instruction, "LD C, D"));
+        m.insert(0x4B, (ld_c_e as Instruction, "LD C, E"));
+        m.insert(0x4C, (ld_c_h as Instruction, "LD C, H"));
+        m.insert(0x4D, (ld_c_l as Instruction, "LD C, L"));
+        m.insert(0x4E, (ld_c_hl as Instruction, "LD C, (HL)"));
+
+        m.insert(0x50, (ld_d_b as Instruction, "LD D, B"));
+        m.insert(0x51, (ld_d_c as Instruction, "LD D, C"));
+        m.insert(0x52, (ld_d_d as Instruction, "LD D, D"));
+        m.insert(0x53, (ld_d_e as Instruction, "LD D, E"));
+        m.insert(0x54, (ld_d_h as Instruction, "LD D, H"));
+        m.insert(0x55, (ld_d_l as Instruction, "LD D, L"));
+        m.insert(0x56, (ld_d_hl as Instruction, "LD D, (HL)"));
+
+        m.insert(0x58, (ld_e_b as Instruction, "LD E, B"));
+        m.insert(0x59, (ld_e_c as Instruction, "LD E, C"));
+        m.insert(0x5A, (ld_e_d as Instruction, "LD E, D"));
+        m.insert(0x5B, (ld_e_e as Instruction, "LD E, E"));
+        m.insert(0x5C, (ld_e_h as Instruction, "LD E, H"));
+        m.insert(0x5D, (ld_e_l as Instruction, "LD E, L"));
+        m.insert(0x5E, (ld_e_hl as Instruction, "LD E, (HL)"));
+
+        m.insert(0x60, (ld_h_b as Instruction, "LD H, B"));
+        m.insert(0x61, (ld_h_c as Instruction, "LD H, C"));
+        m.insert(0x62, (ld_h_d as Instruction, "LD H, D"));
+        m.insert(0x63, (ld_h_e as Instruction, "LD H, E"));
+        m.insert(0x64, (ld_h_h as Instruction, "LD H, H"));
+        m.insert(0x65, (ld_h_l as Instruction, "LD H, L"));
+        m.insert(0x66, (ld_h_hl as Instruction, "LD H, (HL)"));
+
+        m.insert(0x68, (ld_l_b as Instruction, "LD L, B"));
+        m.insert(0x69, (ld_l_c as Instruction, "LD L, C"));
+        m.insert(0x6A, (ld_l_d as Instruction, "LD L, D"));
+        m.insert(0x6B, (ld_l_e as Instruction, "LD L, E"));
+        m.insert(0x6C, (ld_l_h as Instruction, "LD L, H"));
+        m.insert(0x6D, (ld_l_l as Instruction, "LD L, L"));
+        m.insert(0x6E, (ld_l_hl as Instruction, "LD L, (HL)"));
+
+        m.insert(0x70, (ld_hl_b as Instruction, "LD (HL), B"));
+        m.insert(0x71, (ld_hl_c as Instruction, "LD (HL), C"));
+        m.insert(0x72, (ld_hl_d as Instruction, "LD (HL), D"));
+        m.insert(0x73, (ld_hl_e as Instruction, "LD (HL), E"));
+        m.insert(0x74, (ld_hl_h as Instruction, "LD (HL), H"));
+        m.insert(0x75, (ld_hl_l as Instruction, "LD (HL), L"));
+        m.insert(0x36, (ld_hl_n as Instruction, "LD (HL), n"));
+
+        m.insert(0x0A, (ld_a_bc as Instruction, "LD A, (BC)"));
+        m.insert(0x1A, (ld_a_de as Instruction, "LD A, (DE)"));
+        m.insert(0xFA, (ld_a_nn as Instruction, "LD A, (nn)"));
+        m.insert(0x3E, (ld_a_n as Instruction, "LD A, #"));
+
+        m.insert(0x47, (ld_b_a as Instruction, "LD B, A"));
+        m.insert(0x4F, (ld_c_a as Instruction, "LD C, A"));
+        m.insert(0x57, (ld_d_a as Instruction, "LD D, A"));
+        m.insert(0x5F, (ld_e_a as Instruction, "LD E, A"));
+        m.insert(0x67, (ld_h_a as Instruction, "LD H, A"));
+        m.insert(0x6F, (ld_l_a as Instruction, "LD L, A"));
+        m.insert(0x02, (ld_bc_a as Instruction, "LD (BC), A"));
+        m.insert(0x12, (ld_de_a as Instruction, "LD (DE), A"));
+        m.insert(0x77, (ld_hl_a as Instruction, "LD (HL), A"));
+        m.insert(0xEA, (ld_nn_a as Instruction, "LD (nn), A"));
+
+        m.insert(0xF2, (ld_a_c_ff00 as Instruction, "LD A, (C)"));
+        m.insert(0xE2, (ld_c_ff00_a as Instruction, "LD (C), A"));
+
         m
     };
 }
@@ -370,8 +456,7 @@ fn undefined(cpu: &mut CPU) -> u8
 /// Load the immediate 8-bit value into register 'B'
 fn ld_b_n(cpu: &mut CPU) -> u8
 {
-    let pc = cpu.regs.pc + 1;
-    let n = cpu.fetch_byte(pc);
+    let n = cpu.next_byte();
     cpu.regs.b = n;
     8
 }
@@ -379,8 +464,7 @@ fn ld_b_n(cpu: &mut CPU) -> u8
 /// Load the immediate 8-bit value into register 'C'
 fn ld_c_n(cpu: &mut CPU) -> u8
 {
-    let pc = cpu.regs.pc + 1;
-    let n = cpu.fetch_byte(pc);
+    let n = cpu.next_byte();
     cpu.regs.c = n;
     8
 }
@@ -388,8 +472,7 @@ fn ld_c_n(cpu: &mut CPU) -> u8
 /// Load the immediate 8-bit value into register 'D'
 fn ld_d_n(cpu: &mut CPU) -> u8
 {
-    let pc = cpu.regs.pc + 1;
-    let n = cpu.fetch_byte(pc);
+    let n = cpu.next_byte();
     cpu.regs.d = n;
     8
 }
@@ -397,8 +480,7 @@ fn ld_d_n(cpu: &mut CPU) -> u8
 /// Load the immediate 8-bit value into register 'E'
 fn ld_e_n(cpu: &mut CPU) -> u8
 {
-    let pc = cpu.regs.pc + 1;
-    let n = cpu.fetch_byte(pc);
+    let n = cpu.next_byte();
     cpu.regs.e = n;
     8
 }
@@ -406,8 +488,7 @@ fn ld_e_n(cpu: &mut CPU) -> u8
 /// Load the immediate 8-bit value into register 'H'
 fn ld_h_n(cpu: &mut CPU) -> u8
 {
-    let pc = cpu.regs.pc + 1;
-    let n = cpu.fetch_byte(pc);
+    let n = cpu.next_byte();
     cpu.regs.h = n;
     8
 }
@@ -415,8 +496,7 @@ fn ld_h_n(cpu: &mut CPU) -> u8
 /// Load the immediate 8-bit value into register 'L'
 fn ld_l_n(cpu: &mut CPU) -> u8
 {
-    let pc = cpu.regs.pc + 1;
-    let n = cpu.fetch_byte(pc);
+    let n = cpu.next_byte();
     cpu.regs.l = n;
     8
 }
@@ -536,5 +616,480 @@ fn ld_b_hl(cpu: &mut CPU) -> u8
     let hl = cpu.hl();
     let v = cpu.fetch_byte(hl);
     cpu.regs.b = v;
+    8
+}
+
+/// Load 'B' into 'C'
+fn ld_c_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    cpu.regs.c = b;
+    4
+}
+
+/// Load 'C' into 'C' (no operation)
+fn ld_c_c(_: &mut CPU) -> u8
+{
+    4
+}
+
+/// Load 'D' into 'C'
+fn ld_c_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    cpu.regs.c = d;
+    4
+}
+
+/// Load 'E' into 'C'
+fn ld_c_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    cpu.regs.c = e;
+    4
+}
+
+/// Load 'H' into 'C'
+fn ld_c_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    cpu.regs.c = h;
+    4
+}
+
+/// Load 'L' into 'C'
+fn ld_c_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    cpu.regs.c = l;
+    4
+}
+
+/// Load 'HL' into 'C'
+fn ld_c_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let v = cpu.fetch_byte(hl);
+    cpu.regs.c = v;
+    8
+}
+
+/// Load 'B' into 'D'
+fn ld_d_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    cpu.regs.d = b;
+    4
+}
+
+/// Load 'C' into 'D'
+fn ld_d_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    cpu.regs.d = c;
+    4
+}
+
+/// Load 'D' into 'D' (no operation)
+fn ld_d_d(_: &mut CPU) -> u8
+{
+    4
+}
+
+/// Load 'E' into 'D'
+fn ld_d_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    cpu.regs.d = e;
+    4
+}
+
+/// Load 'H' into 'D'
+fn ld_d_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    cpu.regs.d = h;
+    4
+}
+
+/// Load 'L' into 'D'
+fn ld_d_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    cpu.regs.d = l;
+    4
+}
+
+/// Load 'HL' into 'D'
+fn ld_d_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let v = cpu.fetch_byte(hl);
+    cpu.regs.d = v;
+    8
+}
+
+/// Load 'B' into 'E'
+fn ld_e_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    cpu.regs.e = b;
+    4
+}
+
+/// Load 'C' into 'E'
+fn ld_e_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    cpu.regs.e = c;
+    4
+}
+
+/// Load 'D' into 'E'
+fn ld_e_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    cpu.regs.e = d;
+    4
+}
+
+/// Load 'E' into 'E' (no operation)
+fn ld_e_e(_: &mut CPU) -> u8
+{
+    4
+}
+
+/// Load 'H' into 'E'
+fn ld_e_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    cpu.regs.e = h;
+    4
+}
+
+/// Load 'L' into 'E'
+fn ld_e_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    cpu.regs.e = l;
+    4
+}
+
+/// Load 'HL' into 'E'
+fn ld_e_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let v = cpu.fetch_byte(hl);
+    cpu.regs.e = v;
+    8
+}
+
+/// Load 'B' into 'H'
+fn ld_h_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    cpu.regs.h = b;
+    4
+}
+
+/// Load 'C' into 'H'
+fn ld_h_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    cpu.regs.h = c;
+    4
+}
+
+/// Load 'D' into 'H'
+fn ld_h_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    cpu.regs.h = d;
+    4
+}
+
+/// Load 'E' into 'H'
+fn ld_h_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    cpu.regs.h = e;
+    4
+}
+
+/// Load 'H' into 'H' (no operation)
+fn ld_h_h(_: &mut CPU) -> u8
+{
+    4
+}
+
+/// Load 'L' into 'H'
+fn ld_h_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    cpu.regs.h = l;
+    4
+}
+
+/// Load 'HL' into 'H'
+fn ld_h_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let v = cpu.fetch_byte(hl);
+    cpu.regs.h = v;
+    8
+}
+
+/// Load 'B' into 'L'
+fn ld_l_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    cpu.regs.l = b;
+    4
+}
+
+/// Load 'C' into 'L'
+fn ld_l_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    cpu.regs.l = c;
+    4
+}
+
+/// Load 'D' into 'L'
+fn ld_l_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    cpu.regs.l = d;
+    4
+}
+
+/// Load 'E' into 'L'
+fn ld_l_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    cpu.regs.l = e;
+    4
+}
+
+/// Load 'H' into 'L'
+fn ld_l_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    cpu.regs.l = h;
+    4
+}
+
+/// Load 'L' into 'L' (no operation)
+fn ld_l_l(_: &mut CPU) -> u8
+{
+    4
+}
+
+/// Load 'HL' into 'L'
+fn ld_l_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let v = cpu.fetch_byte(hl);
+    cpu.regs.l = v;
+    8
+}
+
+/// Load 'B' into 'HL'
+fn ld_hl_b(cpu: &mut CPU) -> u8
+{
+    let b = cpu.regs.b;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, b);
+    8
+}
+
+/// Load 'C' into 'HL'
+fn ld_hl_c(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, c);
+    8
+}
+
+/// Load 'D' into 'HL'
+fn ld_hl_d(cpu: &mut CPU) -> u8
+{
+    let d = cpu.regs.d;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, d);
+    8
+}
+
+/// Load 'E' into 'HL'
+fn ld_hl_e(cpu: &mut CPU) -> u8
+{
+    let e = cpu.regs.e;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, e);
+    8
+}
+
+/// Load 'H' into 'HL'
+fn ld_hl_h(cpu: &mut CPU) -> u8
+{
+    let h = cpu.regs.h;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, h);
+    8
+}
+
+/// Load 'L' into 'HL'
+fn ld_hl_l(cpu: &mut CPU) -> u8
+{
+    let l = cpu.regs.l;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, l);
+    8
+}
+
+/// Load the next immediate byte into 'HL'
+fn ld_hl_n(cpu: &mut CPU) -> u8
+{
+    let n = cpu.next_byte();
+    let hl = cpu.hl();
+    cpu.store_byte(hl, n);
+    12
+}
+
+/// Load 'BC' into 'A'
+fn ld_a_bc(cpu: &mut CPU) -> u8
+{
+    let bc = cpu.bc();
+    let v = cpu.fetch_byte(bc);
+    cpu.regs.a = v;
+    8
+}
+
+/// Load 'DE' into 'A'
+fn ld_a_de(cpu: &mut CPU) -> u8
+{
+    let de = cpu.de();
+    let v = cpu.fetch_byte(de);
+    cpu.regs.a = v;
+    8
+}
+
+/// Load the next immediate word into 'A'
+fn ld_a_nn(cpu: &mut CPU) -> u8
+{
+    let nn = cpu.next_word();
+    let v = cpu.fetch_byte(nn);
+    cpu.regs.a = v;
+    16
+}
+
+/// Load the next immediate byte into 'A'
+fn ld_a_n(cpu: &mut CPU) -> u8
+{
+    let n = cpu.next_byte();
+    cpu.regs.a = n;
+    8
+}
+
+/// Load 'A' into 'B'
+fn ld_b_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.b = a;
+    4
+}
+
+/// Load 'A' into 'C'
+fn ld_c_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.c = a;
+    4
+}
+
+/// Load 'A' into 'D'
+fn ld_d_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.d = a;
+    4
+}
+
+/// Load 'A' into 'E'
+fn ld_e_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.e = a;
+    4
+}
+
+/// Load 'A' into 'H'
+fn ld_h_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.h = a;
+    4
+}
+
+/// Load 'A' into 'L'
+fn ld_l_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.regs.l = a;
+    4
+}
+
+/// Load 'A' into 'BC'
+fn ld_bc_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let bc = cpu.bc();
+    cpu.store_byte(bc, a);
+    8
+}
+
+/// Load 'A' into 'DE'
+fn ld_de_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let de = cpu.de();
+    cpu.store_byte(de, a);
+    8
+}
+
+/// Load 'A' into 'HL'
+fn ld_hl_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    cpu.store_byte(hl, a);
+    8
+}
+
+/// Load 'A' into the next immediate word
+fn ld_nn_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let nn = cpu.next_word();
+    cpu.store_byte(nn, a);
+    16
+}
+
+/// Load '[0xFF00 + C]' into 'A'
+fn ld_a_c_ff00(cpu: &mut CPU) -> u8
+{
+    let c = cpu.regs.c as u16;
+    let v = cpu.fetch_byte(0xFF00 | c);
+    cpu.regs.a = v;
+    8
+}
+
+/// Load 'A' into '[0xFF00 + C]'
+fn ld_c_ff00_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c as u16;
+    cpu.store_byte(0xFF00 | c, a);
     8
 }
