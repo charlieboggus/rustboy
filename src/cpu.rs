@@ -94,6 +94,9 @@ pub struct CPU
     /// Interrupt Master Enable flag: Reset by the DI and prohibits all interrupts
     ime: bool,
 
+    /// Interrupt Mode Enable after next instruction flag
+    imen: bool,
+
     /// CPU halted flag
     halted: bool,
 
@@ -130,6 +133,7 @@ impl CPU
             flags: flags,
             mem: MMU::new(),
             ime: true,
+            imen: true,
             halted: false,
             cycles: 0u8
         }
@@ -145,12 +149,17 @@ impl CPU
         // TODO
 
         // Halted
-        // TODO
+        if self.halted
+        {
+            // TODO: this
+        }
 
         // Fetch and run the next instruction and return number of cycles 
         // it took to execute
         let instruction = self.get_next_instruction();
         self.cycles = (instruction)(self);
+
+        // TODO: do something with the returned amount of cycles (timer stuff..)
         self.cycles
     }
 
@@ -191,6 +200,48 @@ impl CPU
                 crate::cpu::undefined
             }
         }
+    }
+
+    /// Disable interrupts
+    fn disable_interrupts(&mut self)
+    {
+        self.ime = false;
+        self.imen = false;
+    }
+
+    /// Enable interrupts immediately
+    fn enable_interrupts(&mut self)
+    {
+        self.ime = true;
+        self.imen = true;
+    }
+
+    /// Enable interrupts after next instruction
+    fn enable_interrupts_after_next(&mut self)
+    {
+        self.imen = true;
+    }
+
+    /// Halt and wait for interrupts
+    fn halt(&mut self)
+    {
+        self.halted = true;
+    }
+
+    /// Stop CPU and LCD display until button press
+    fn stop(&mut self)
+    {
+        // TODO: implement STOP
+    }
+
+    fn interrupt(&mut self)
+    {
+        // TODO: implement interrupt
+    }
+
+    pub fn reset(&mut self)
+    {
+        self.regs.pc = 0x0;
     }
 
     /// Fetch a byte from the given address
@@ -325,48 +376,6 @@ impl CPU
     {
         self.regs.h = (hl >> 8) as u8;
         self.regs.l = hl as u8;
-    }
-
-    /// Disable interrupts
-    fn disable_interrupts(&mut self)
-    {
-        self.ime = false;
-    }
-
-    /// Enable interrupts immediately
-    fn enable_interrupts(&mut self)
-    {
-        self.ime = true;
-    }
-
-    /// Enable interrupts after next instruction
-    fn enable_interrupts_after_next(&mut self)
-    {
-    }
-
-    /// Halt and wait for interrupts
-    fn halt(&mut self)
-    {
-        self.halted = true;
-    }
-
-    /// Stop CPU and LCD display until button press
-    fn stop(&mut self)
-    {
-    }
-
-    fn interrupt(&mut self)
-    {
-    }
-
-    /// Delay the CPU by a given number of cycles
-    fn delay(&mut self, cycles: u8)
-    {
-    }
-
-    pub fn reset(&mut self)
-    {
-        self.regs.pc = 0x0;
     }
 }
 
