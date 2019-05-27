@@ -371,7 +371,10 @@ impl CPU
 }
 
 // ---------------------------- BEGIN INSTRUCTIONS -----------------------------
+//
 //           http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf - pg. 65+
+//          why oh why does the gameboy have so many instructions.....
+//
 
 lazy_static!
 {
@@ -510,6 +513,7 @@ lazy_static!
         m.insert(0x8D, (adc_a_l as Instruction, "ADC A, L"));
         m.insert(0x8E, (adc_a_hl as Instruction, "ADC A, HL"));
         m.insert(0xCE, (adc_a_n as Instruction, "ADC A, #"));
+
         m.insert(0x97, (sub_a_a as Instruction, "SUB A, A"));
         m.insert(0x90, (sub_a_b as Instruction, "SUB A, B"));
         m.insert(0x91, (sub_a_c as Instruction, "SUB A, C"));
@@ -519,6 +523,7 @@ lazy_static!
         m.insert(0x95, (sub_a_l as Instruction, "SUB A, L"));
         m.insert(0x96, (sub_a_hl as Instruction, "SUB A, HL"));
         m.insert(0xD6, (sub_a_n as Instruction, "SUB A, #"));
+
         m.insert(0x9F, (sbc_a_a as Instruction, "SBC A, A"));
         m.insert(0x98, (sbc_a_b as Instruction, "SBC A, B"));
         m.insert(0x99, (sbc_a_c as Instruction, "SBC A, C"));
@@ -528,6 +533,7 @@ lazy_static!
         m.insert(0x9D, (sbc_a_l as Instruction, "SBC A, L"));
         m.insert(0x9E, (sbc_a_hl as Instruction, "SBC A, HL"));
         m.insert(0xDE, (sbc_a_n as Instruction, "SBC A, #"));
+
         m.insert(0xA7, (and_a_a as Instruction, "AND A, A"));
         m.insert(0xA0, (and_a_b as Instruction, "AND A, B"));
         m.insert(0xA1, (and_a_c as Instruction, "AND A, C"));
@@ -537,6 +543,7 @@ lazy_static!
         m.insert(0xA5, (and_a_l as Instruction, "AND A, L"));
         m.insert(0xA6, (and_a_hl as Instruction, "AND A, HL"));
         m.insert(0xE6, (and_a_n as Instruction, "AND A, #"));
+
         m.insert(0xB7, (or_a_a as Instruction, "OR A, A"));
         m.insert(0xB0, (or_a_b as Instruction, "OR A, B"));
         m.insert(0xB1, (or_a_c as Instruction, "OR A, C"));
@@ -546,6 +553,7 @@ lazy_static!
         m.insert(0xB5, (or_a_l as Instruction, "OR A, L"));
         m.insert(0xB6, (or_a_hl as Instruction, "OR A, HL"));
         m.insert(0xF6, (or_a_n as Instruction, "OR A, #"));
+
         m.insert(0xAF, (xor_a_a as Instruction, "XOR A, A"));
         m.insert(0xA8, (xor_a_b as Instruction, "XOR A, B"));
         m.insert(0xA9, (xor_a_c as Instruction, "XOR A, C"));
@@ -555,6 +563,7 @@ lazy_static!
         m.insert(0xAD, (xor_a_l as Instruction, "XOR A, L"));
         m.insert(0xAE, (xor_a_hl as Instruction, "XOR A, HL"));
         m.insert(0xEE, (xor_a_n as Instruction, "XOR A, #"));
+
         m.insert(0xBF, (cp_a_a as Instruction, "CP A, A"));
         m.insert(0xB8, (cp_a_b as Instruction, "CP A, B"));
         m.insert(0xB9, (cp_a_c as Instruction, "CP A, C"));
@@ -564,6 +573,7 @@ lazy_static!
         m.insert(0xBD, (cp_a_l as Instruction, "CP A, L"));
         m.insert(0xBE, (cp_a_hl as Instruction, "CP A, HL"));
         m.insert(0xFE, (cp_a_n as Instruction, "CP A, #"));
+
         m.insert(0x3C, (inc_a as Instruction, "INC A"));
         m.insert(0x04, (inc_b as Instruction, "INC B"));
         m.insert(0x0C, (inc_c as Instruction, "INC C"));
@@ -572,6 +582,7 @@ lazy_static!
         m.insert(0x24, (inc_h as Instruction, "INC H"));
         m.insert(0x2C, (inc_l as Instruction, "INC L"));
         m.insert(0x34, (inc_hl as Instruction, "INC HL"));
+
         m.insert(0x3D, (dec_a as Instruction, "DEC A"));
         m.insert(0x05, (dec_b as Instruction, "DEC B"));
         m.insert(0x0D, (dec_c as Instruction, "DEC C"));
@@ -588,10 +599,12 @@ lazy_static!
         m.insert(0x29, (add_hl_hl as Instruction, "ADD HL, HL"));
         m.insert(0x39, (add_hl_sp as Instruction, "ADD HL, SP"));
         m.insert(0xE8, (add_sp_n as Instruction, "ADD SP, #"));
+
         m.insert(0x03, (inc_bc as Instruction, "INC BC"));
         m.insert(0x13, (inc_de as Instruction, "INC DE"));
         m.insert(0x23, (inc_hl_16 as Instruction, "INC HL"));
         m.insert(0x33, (inc_sp as Instruction, "INC SP"));
+        
         m.insert(0x0B, (dec_bc as Instruction, "DEC BC"));
         m.insert(0x1B, (dec_de as Instruction, "DEC DE"));
         m.insert(0x2B, (dec_hl_16 as Instruction, "DEC HL"));
@@ -617,7 +630,7 @@ lazy_static!
 
         // ------------------------------- Jumps -------------------------------
 
-        m.insert(0xC3, (jp as Instruction, "JP"));
+        m.insert(0xC3, (jp_nn as Instruction, "JP nn"));
 
         m.insert(0xC2, (jp_nz_nn as Instruction, "JP Z, nn"));
         m.insert(0xCA, (jp_z_nn as Instruction, "JP Z, nn"));
@@ -746,32 +759,88 @@ lazy_static!
         m.insert(0x3D, (srl_l as Instruction, "SRL L"));
         m.insert(0x3E, (srl_hl as Instruction, "SRL HL"));
 
-        m.insert(0x47, (bit_b_a as Instruction, "BIT b, A"));
-        m.insert(0x40, (bit_b_b as Instruction, "BIT b, B"));
-        m.insert(0x41, (bit_b_c as Instruction, "BIT b, C"));
-        m.insert(0x42, (bit_b_d as Instruction, "BIT b, D"));
-        m.insert(0x43, (bit_b_e as Instruction, "BIT b, E"));
-        m.insert(0x44, (bit_b_h as Instruction, "BIT b, H"));
-        m.insert(0x45, (bit_b_l as Instruction, "BIT b, L"));
-        m.insert(0x46, (bit_b_hl as Instruction, "BIT b, HL"));
+        m.insert(0x47, ((|cpu: &mut CPU| { bit_a(cpu, 0); 8 }) as Instruction, "BIT 0, A"));
+        m.insert(0x4F, ((|cpu: &mut CPU| { bit_a(cpu, 1); 8 }) as Instruction, "BIT 1, A"));
+        m.insert(0x57, ((|cpu: &mut CPU| { bit_a(cpu, 2); 8 }) as Instruction, "BIT 2, A"));
+        m.insert(0x5F, ((|cpu: &mut CPU| { bit_a(cpu, 3); 8 }) as Instruction, "BIT 3, A"));
+        m.insert(0x67, ((|cpu: &mut CPU| { bit_a(cpu, 4); 8 }) as Instruction, "BIT 4, A"));
+        m.insert(0x6F, ((|cpu: &mut CPU| { bit_a(cpu, 5); 8 }) as Instruction, "BIT 5, A"));
+        m.insert(0x77, ((|cpu: &mut CPU| { bit_a(cpu, 6); 8 }) as Instruction, "BIT 6, A"));
+        m.insert(0x7F, ((|cpu: &mut CPU| { bit_a(cpu, 7); 8 }) as Instruction, "BIT 7, A"));
+        m.insert(0x40, ((|cpu: &mut CPU| { bit_b(cpu, 0); 8 }) as Instruction, "BIT 0, B"));
+        m.insert(0x48, ((|cpu: &mut CPU| { bit_b(cpu, 1); 8 }) as Instruction, "BIT 1, B"));
+        m.insert(0x50, ((|cpu: &mut CPU| { bit_b(cpu, 2); 8 }) as Instruction, "BIT 2, B"));
+        m.insert(0x58, ((|cpu: &mut CPU| { bit_b(cpu, 3); 8 }) as Instruction, "BIT 3, B"));
+        m.insert(0x60, ((|cpu: &mut CPU| { bit_b(cpu, 4); 8 }) as Instruction, "BIT 4, B"));
+        m.insert(0x68, ((|cpu: &mut CPU| { bit_b(cpu, 5); 8 }) as Instruction, "BIT 5, B"));
+        m.insert(0x70, ((|cpu: &mut CPU| { bit_b(cpu, 6); 8 }) as Instruction, "BIT 6, B"));
+        m.insert(0x78, ((|cpu: &mut CPU| { bit_b(cpu, 7); 8 }) as Instruction, "BIT 7, B"));
+        m.insert(0x41, ((|cpu: &mut CPU| { bit_c(cpu, 0); 8 }) as Instruction, "BIT 0, C"));
+        m.insert(0x49, ((|cpu: &mut CPU| { bit_c(cpu, 1); 8 }) as Instruction, "BIT 1, C"));
+        m.insert(0x51, ((|cpu: &mut CPU| { bit_c(cpu, 2); 8 }) as Instruction, "BIT 2, C"));
+        m.insert(0x59, ((|cpu: &mut CPU| { bit_c(cpu, 3); 8 }) as Instruction, "BIT 3, C"));
+        m.insert(0x61, ((|cpu: &mut CPU| { bit_c(cpu, 4); 8 }) as Instruction, "BIT 4, C"));
+        m.insert(0x69, ((|cpu: &mut CPU| { bit_c(cpu, 5); 8 }) as Instruction, "BIT 5, C"));
+        m.insert(0x71, ((|cpu: &mut CPU| { bit_c(cpu, 6); 8 }) as Instruction, "BIT 6, C"));
+        m.insert(0x79, ((|cpu: &mut CPU| { bit_c(cpu, 7); 8 }) as Instruction, "BIT 7, C"));
+        m.insert(0x42, ((|cpu: &mut CPU| { bit_d(cpu, 0); 8 }) as Instruction, "BIT 0, D"));
+        m.insert(0x4A, ((|cpu: &mut CPU| { bit_d(cpu, 1); 8 }) as Instruction, "BIT 1, D"));
+        m.insert(0x52, ((|cpu: &mut CPU| { bit_d(cpu, 2); 8 }) as Instruction, "BIT 2, D"));
+        m.insert(0x5A, ((|cpu: &mut CPU| { bit_d(cpu, 3); 8 }) as Instruction, "BIT 3, D"));
+        m.insert(0x62, ((|cpu: &mut CPU| { bit_d(cpu, 4); 8 }) as Instruction, "BIT 4, D"));
+        m.insert(0x6A, ((|cpu: &mut CPU| { bit_d(cpu, 5); 8 }) as Instruction, "BIT 5, D"));
+        m.insert(0x72, ((|cpu: &mut CPU| { bit_d(cpu, 6); 8 }) as Instruction, "BIT 6, D"));
+        m.insert(0x7A, ((|cpu: &mut CPU| { bit_d(cpu, 7); 8 }) as Instruction, "BIT 7, D"));
+        m.insert(0x43, ((|cpu: &mut CPU| { bit_e(cpu, 0); 8 }) as Instruction, "BIT 0, E"));
+        m.insert(0x4B, ((|cpu: &mut CPU| { bit_e(cpu, 1); 8 }) as Instruction, "BIT 1, E"));
+        m.insert(0x53, ((|cpu: &mut CPU| { bit_e(cpu, 2); 8 }) as Instruction, "BIT 2, E"));
+        m.insert(0x5B, ((|cpu: &mut CPU| { bit_e(cpu, 3); 8 }) as Instruction, "BIT 3, E"));
+        m.insert(0x63, ((|cpu: &mut CPU| { bit_e(cpu, 4); 8 }) as Instruction, "BIT 4, E"));
+        m.insert(0x6B, ((|cpu: &mut CPU| { bit_e(cpu, 5); 8 }) as Instruction, "BIT 5, E"));
+        m.insert(0x73, ((|cpu: &mut CPU| { bit_e(cpu, 6); 8 }) as Instruction, "BIT 6, E"));
+        m.insert(0x7B, ((|cpu: &mut CPU| { bit_e(cpu, 7); 8 }) as Instruction, "BIT 7, E"));
+        m.insert(0x44, ((|cpu: &mut CPU| { bit_h(cpu, 0); 8 }) as Instruction, "BIT 0, H"));
+        m.insert(0x4C, ((|cpu: &mut CPU| { bit_h(cpu, 1); 8 }) as Instruction, "BIT 1, H"));
+        m.insert(0x54, ((|cpu: &mut CPU| { bit_h(cpu, 2); 8 }) as Instruction, "BIT 2, H"));
+        m.insert(0x5C, ((|cpu: &mut CPU| { bit_h(cpu, 3); 8 }) as Instruction, "BIT 3, H"));
+        m.insert(0x64, ((|cpu: &mut CPU| { bit_h(cpu, 4); 8 }) as Instruction, "BIT 4, H"));
+        m.insert(0x6C, ((|cpu: &mut CPU| { bit_h(cpu, 5); 8 }) as Instruction, "BIT 5, H"));
+        m.insert(0x74, ((|cpu: &mut CPU| { bit_h(cpu, 6); 8 }) as Instruction, "BIT 6, H"));
+        m.insert(0x7C, ((|cpu: &mut CPU| { bit_h(cpu, 7); 8 }) as Instruction, "BIT 7, H"));
+        m.insert(0x45, ((|cpu: &mut CPU| { bit_l(cpu, 0); 8 }) as Instruction, "BIT 0, L"));
+        m.insert(0x4D, ((|cpu: &mut CPU| { bit_l(cpu, 1); 8 }) as Instruction, "BIT 1, L"));
+        m.insert(0x55, ((|cpu: &mut CPU| { bit_l(cpu, 2); 8 }) as Instruction, "BIT 2, L"));
+        m.insert(0x5D, ((|cpu: &mut CPU| { bit_l(cpu, 3); 8 }) as Instruction, "BIT 3, L"));
+        m.insert(0x65, ((|cpu: &mut CPU| { bit_l(cpu, 4); 8 }) as Instruction, "BIT 4, L"));
+        m.insert(0x6D, ((|cpu: &mut CPU| { bit_l(cpu, 5); 8 }) as Instruction, "BIT 5, L"));
+        m.insert(0x75, ((|cpu: &mut CPU| { bit_l(cpu, 6); 8 }) as Instruction, "BIT 6, L"));
+        m.insert(0x7D, ((|cpu: &mut CPU| { bit_l(cpu, 7); 8 }) as Instruction, "BIT 7, L"));
+        m.insert(0x46, ((|cpu: &mut CPU| { bit_hl(cpu, 0); 16 }) as Instruction, "BIT 0, HL"));
+        m.insert(0x4E, ((|cpu: &mut CPU| { bit_hl(cpu, 1); 16 }) as Instruction, "BIT 1, HL"));
+        m.insert(0x56, ((|cpu: &mut CPU| { bit_hl(cpu, 2); 16 }) as Instruction, "BIT 2, HL"));
+        m.insert(0x5E, ((|cpu: &mut CPU| { bit_hl(cpu, 3); 16 }) as Instruction, "BIT 3, HL"));
+        m.insert(0x66, ((|cpu: &mut CPU| { bit_hl(cpu, 4); 16 }) as Instruction, "BIT 4, HL"));
+        m.insert(0x6E, ((|cpu: &mut CPU| { bit_hl(cpu, 5); 16 }) as Instruction, "BIT 5, HL"));
+        m.insert(0x76, ((|cpu: &mut CPU| { bit_hl(cpu, 6); 16 }) as Instruction, "BIT 6, HL"));
+        m.insert(0x7E, ((|cpu: &mut CPU| { bit_hl(cpu, 7); 16 }) as Instruction, "BIT 7, HL"));
 
-        m.insert(0xC7, (set_b_a as Instruction, "SET b, A"));
-        m.insert(0xC0, (set_b_b as Instruction, "SET b, B"));
-        m.insert(0xC1, (set_b_c as Instruction, "SET b, C"));
-        m.insert(0xC2, (set_b_d as Instruction, "SET b, D"));
-        m.insert(0xC3, (set_b_e as Instruction, "SET b, E"));
-        m.insert(0xC4, (set_b_h as Instruction, "SET b, H"));
-        m.insert(0xC5, (set_b_l as Instruction, "SET b, L"));
-        m.insert(0xC6, (set_b_hl as Instruction, "SET b, HL"));
+        m.insert(0xC7, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, A"));
+        m.insert(0xC0, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, B"));
+        m.insert(0xC1, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, C"));
+        m.insert(0xC2, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, D"));
+        m.insert(0xC3, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, E"));
+        m.insert(0xC4, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, H"));
+        m.insert(0xC5, ((|cpu: &mut CPU| { 8 }) as Instruction, "SET 0, L"));
+        m.insert(0xC6, ((|cpu: &mut CPU| { 16 }) as Instruction, "SET 0, HL"));
 
-        m.insert(0x87, (res_b_a as Instruction, "RES b, A"));
-        m.insert(0x80, (res_b_b as Instruction, "RES b, B"));
-        m.insert(0x81, (res_b_c as Instruction, "RES b, C"));
-        m.insert(0x82, (res_b_d as Instruction, "RES b, D"));
-        m.insert(0x83, (res_b_e as Instruction, "RES b, E"));
-        m.insert(0x84, (res_b_h as Instruction, "RES b, H"));
-        m.insert(0x85, (res_b_l as Instruction, "RES b, L"));
-        m.insert(0x86, (res_b_hl as Instruction, "RES b, HL"));
+        m.insert(0x87, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, A"));
+        m.insert(0x80, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, B"));
+        m.insert(0x81, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, C"));
+        m.insert(0x82, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, D"));
+        m.insert(0x83, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, E"));
+        m.insert(0x84, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, H"));
+        m.insert(0x85, ((|cpu: &mut CPU| { 8 }) as Instruction, "RES 0, L"));
+        m.insert(0x86, ((|cpu: &mut CPU| { 16 }) as Instruction, "RES 0, HL"));
 
         m
     };
@@ -3419,4 +3488,497 @@ fn rrc_hl(cpu: &mut CPU) -> u8
     let r = rrc(cpu, n);
     cpu.store_byte(hl, r);
     16
+}
+
+fn rr(cpu: &mut CPU, v: u8) -> u8
+{
+    let old_c = cpu.flags.c as u8;
+    cpu.flags.c = v & 0x1 != 0;
+
+    let r = (v >> 1) | (old_c << 7);
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Rotate A right through carry
+fn rr_a(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.a;
+    let r = rr(cpu, v);
+    cpu.regs.a = r;
+    8
+}
+
+/// Rotate B right through carry
+fn rr_b(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.b;
+    let r = rr(cpu, v);
+    cpu.regs.b = r;
+    8
+}
+
+/// Rotate C right through carry
+fn rr_c(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.c;
+    let r = rr(cpu, v);
+    cpu.regs.c = r;
+    8
+}
+
+/// Rotate D right through carry
+fn rr_d(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.d;
+    let r = rr(cpu, v);
+    cpu.regs.d = r;
+    8
+}
+
+/// Rotate E right through carry
+fn rr_e(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.e;
+    let r = rr(cpu, v);
+    cpu.regs.e = r;
+    8
+}
+
+/// Rotate H right through carry
+fn rr_h(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.h;
+    let r = rr(cpu, v);
+    cpu.regs.h = r;
+    8
+}
+
+/// Rotate L right through carry
+fn rr_l(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.l;
+    let r = rr(cpu, v);
+    cpu.regs.l = r;
+    8
+}
+
+/// Rotate HL right through carry
+fn rr_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = rr(cpu, n);
+    cpu.store_byte(hl, r);
+    16
+}
+
+// Helper function to shift a byte to the left and update CPU flags register
+fn sla(cpu: &mut CPU, v: u8) -> u8
+{
+    cpu.flags.c = v & 0x80 != 0;
+
+    let r = v << 1;
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Shift A left
+fn sla_a(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.a;
+    let r = sla(cpu, v);
+    cpu.regs.a = r;
+    8   
+}
+
+/// Shift B left
+fn sla_b(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.b;
+    let r = sla(cpu, v);
+    cpu.regs.b = r;
+    8   
+}
+
+/// Shift C left
+fn sla_c(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.c;
+    let r = sla(cpu, v);
+    cpu.regs.c = r;
+    8   
+}
+
+/// Shift D left
+fn sla_d(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.d;
+    let r = sla(cpu, v);
+    cpu.regs.d = r;
+    8   
+}
+
+/// Shift E left
+fn sla_e(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.e;
+    let r = sla(cpu, v);
+    cpu.regs.e = r;
+    8   
+}
+
+/// Shift H left
+fn sla_h(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.h;
+    let r = sla(cpu, v);
+    cpu.regs.h = r;
+    8   
+}
+
+/// Shift L left
+fn sla_l(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.l;
+    let r = sla(cpu, v);
+    cpu.regs.l = r;
+    8   
+}
+
+/// Shift HL left
+fn sla_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = sla(cpu, n);
+    cpu.store_byte(hl, r);
+    16  
+}
+
+// Helper function to shift a byte to the right and update CPU flags register
+fn sra(cpu: &mut CPU, v: u8) -> u8
+{
+    cpu.flags.c = v & 1 != 0;
+
+    let r = (v >> 1) | (v & 0x80);
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Shift A right
+fn sra_a(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.a;
+    let r = sra(cpu, v);
+    cpu.regs.a = r;
+    8   
+}
+
+/// Shift B right
+fn sra_b(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.b;
+    let r = sra(cpu, v);
+    cpu.regs.b = r;
+    8   
+}
+
+/// Shift C right
+fn sra_c(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.c;
+    let r = sra(cpu, v);
+    cpu.regs.c = r;
+    8   
+}
+
+/// Shift D right
+fn sra_d(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.d;
+    let r = sra(cpu, v);
+    cpu.regs.d = r;
+    8   
+}
+
+/// Shift E right
+fn sra_e(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.e;
+    let r = sra(cpu, v);
+    cpu.regs.e = r;
+    8   
+}
+
+/// Shift H right
+fn sra_h(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.h;
+    let r = sra(cpu, v);
+    cpu.regs.h = r;
+    8   
+}
+
+/// Shift L right
+fn sra_l(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.l;
+    let r = sra(cpu, v);
+    cpu.regs.l = r;
+    8   
+}
+
+/// Shift HL right
+fn sra_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = sra(cpu, n);
+    cpu.store_byte(hl, r);
+    16  
+}
+
+// Helper function to shift a byte to the right and update CPU flags register
+fn srl(cpu: &mut CPU, v: u8) -> u8
+{
+    cpu.flags.c = v & 1 != 0;
+
+    let r = v >> 1;
+
+    cpu.flags.z = r == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+
+    r
+}
+
+/// Shift A right
+fn srl_a(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.a;
+    let r = srl(cpu, v);
+    cpu.regs.a = r;
+    8   
+}
+
+/// Shift B right
+fn srl_b(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.b;
+    let r = srl(cpu, v);
+    cpu.regs.b = r;
+    8   
+}
+
+/// Shift C right
+fn srl_c(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.c;
+    let r = srl(cpu, v);
+    cpu.regs.c = r;
+    8   
+}
+
+/// Shift D right
+fn srl_d(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.d;
+    let r = srl(cpu, v);
+    cpu.regs.d = r;
+    8   
+}
+
+/// Shift E right
+fn srl_e(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.e;
+    let r = srl(cpu, v);
+    cpu.regs.e = r;
+    8   
+}
+
+/// Shift H right
+fn srl_h(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.h;
+    let r = srl(cpu, v);
+    cpu.regs.h = r;
+    8   
+}
+
+/// Shift L right
+fn srl_l(cpu: &mut CPU) -> u8
+{
+    let v = cpu.regs.l;
+    let r = srl(cpu, v);
+    cpu.regs.l = r;
+    8   
+}
+
+/// Shift HL right
+fn srl_hl(cpu: &mut CPU) -> u8
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let r = srl(cpu, n);
+    cpu.store_byte(hl, r);
+    16  
+}
+
+/// Test a bit in 'A'
+fn bit_a(cpu: &mut CPU, bit: u8)
+{
+    let a = cpu.regs.a;
+    cpu.flags.z = (a & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'B'
+fn bit_b(cpu: &mut CPU, bit: u8)
+{
+    let b = cpu.regs.b;
+    cpu.flags.z = (b & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'C'
+fn bit_c(cpu: &mut CPU, bit: u8)
+{
+    let c = cpu.regs.c;
+    cpu.flags.z = (c & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'D'
+fn bit_d(cpu: &mut CPU, bit: u8)
+{
+    let d = cpu.regs.d;
+    cpu.flags.z = (d & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'E'
+fn bit_e(cpu: &mut CPU, bit: u8)
+{
+    let e = cpu.regs.e;
+    cpu.flags.z = (e & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'H'
+fn bit_h(cpu: &mut CPU, bit: u8)
+{
+    let h = cpu.regs.h;
+    cpu.flags.z = (h & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'L'
+fn bit_l(cpu: &mut CPU, bit: u8)
+{
+    let l = cpu.regs.l;
+    cpu.flags.z = (l & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+/// Test a bit in 'HL'
+fn bit_hl(cpu: &mut CPU, bit: u8)
+{
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    cpu.flags.z = (n & (1u8 << (bit as usize))) == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = true;
+}
+
+fn set_a(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_b(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_c(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_d(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_e(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_h(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_l(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn set_hl(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_a(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_b(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_c(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_d(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_e(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_h(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_l(cpu: &mut CPU, bit: u8)
+{
+}
+
+fn res_hl(cpu: &mut CPU, bit: u8)
+{
+}
+
+/// Jump to address at the two byte immediate value nn
+fn jp_nn(cpu: &mut CPU) -> u8
+{
+    let addr = cpu.next_word();
+    cpu.regs.pc = addr;
+    12
 }
