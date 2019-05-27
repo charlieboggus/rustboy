@@ -513,6 +513,26 @@ lazy_static!
         m.insert(0xA6, (and_a_hl as Instruction, "AND A, HL"));
         m.insert(0xE6, (and_a_n as Instruction, "AND A, #"));
 
+        m.insert(0xB7, (or_a_a as Instruction, "OR A, A"));
+        m.insert(0xB0, (or_a_b as Instruction, "OR A, B"));
+        m.insert(0xB1, (or_a_c as Instruction, "OR A, C"));
+        m.insert(0xB2, (or_a_d as Instruction, "OR A, D"));
+        m.insert(0xB3, (or_a_e as Instruction, "OR A, E"));
+        m.insert(0xB4, (or_a_h as Instruction, "OR A, H"));
+        m.insert(0xB5, (or_a_l as Instruction, "OR A, L"));
+        m.insert(0xB6, (or_a_hl as Instruction, "OR A, HL"));
+        m.insert(0xF6, (or_a_n as Instruction, "OR A, #"));
+
+        m.insert(0xAF, (xor_a_a as Instruction, "XOR A, A"));
+        m.insert(0xA8, (xor_a_b as Instruction, "XOR A, B"));
+        m.insert(0xA9, (xor_a_c as Instruction, "XOR A, C"));
+        m.insert(0xAA, (xor_a_d as Instruction, "XOR A, D"));
+        m.insert(0xAB, (xor_a_e as Instruction, "XOR A, E"));
+        m.insert(0xAC, (xor_a_h as Instruction, "XOR A, H"));
+        m.insert(0xAD, (xor_a_l as Instruction, "XOR A, L"));
+        m.insert(0xAE, (xor_a_hl as Instruction, "XOR A, HL"));
+        m.insert(0xEE, (xor_a_n as Instruction, "XOR A, #"));
+
         m
     };
 }
@@ -1923,10 +1943,290 @@ fn and_a_n(cpu: &mut CPU) -> u8
     let a = cpu.regs.a;
     let n = cpu.next_byte();
     let v = a & n;
-    
+
     cpu.flags.z = v == 0;
     cpu.flags.n = false;
     cpu.flags.h = true;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    8
+}
+
+/// OR 'A' with 'A'
+fn or_a_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.flags.z = a == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+    4
+}
+
+/// OR 'B' with 'A'
+fn or_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    let v = a | b;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// OR 'C' with 'A'
+fn or_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    let v = a | c;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// OR 'D' with 'A'
+fn or_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    let v = a | d;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// OR 'E' with 'A'
+fn or_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    let v = a | e;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// OR 'H' with 'A'
+fn or_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    let v = a | h;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// OR 'L' with 'A'
+fn or_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    let v = a | l;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// OR 'HL' with 'A'
+fn or_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = a | n;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    8
+}
+
+/// or the next immediate byte with 'A'
+fn or_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    let v = a | n;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    8
+}
+
+/// XOR 'A' with 'A'
+fn xor_a_a(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    cpu.flags.z = a == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+    4
+}
+
+/// XOR 'B' with 'A'
+fn xor_a_b(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let b = cpu.regs.b;
+    let v = a ^ b;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// XOR 'C' with 'A'
+fn xor_a_c(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let c = cpu.regs.c;
+    let v = a ^ c;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// XOR 'D' with 'A'
+fn xor_a_d(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let d = cpu.regs.d;
+    let v = a ^ d;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// XOR 'E' with 'A'
+fn xor_a_e(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let e = cpu.regs.e;
+    let v = a ^ e;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// XOR 'H' with 'A'
+fn xor_a_h(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let h = cpu.regs.h;
+    let v = a ^ h;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// XOR 'L' with 'A'
+fn xor_a_l(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let l = cpu.regs.l;
+    let v = a ^ l;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    4
+}
+
+/// XOR 'HL' with 'A'
+fn xor_a_hl(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let hl = cpu.hl();
+    let n = cpu.fetch_byte(hl);
+    let v = a ^ n;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
+    cpu.flags.c = false;
+
+    cpu.regs.a = v;
+    8
+}
+
+/// Xor the next immediate byte with 'A'
+fn xor_a_n(cpu: &mut CPU) -> u8
+{
+    let a = cpu.regs.a;
+    let n = cpu.next_byte();
+    let v = a ^ n;
+
+    cpu.flags.z = v == 0;
+    cpu.flags.n = false;
+    cpu.flags.h = false;
     cpu.flags.c = false;
 
     cpu.regs.a = v;
