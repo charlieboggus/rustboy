@@ -1,4 +1,4 @@
-use crate::mem::MMU;
+use crate::mmu::MMU;
 use std::collections::HashMap;
 
 /// Represents all of the Gameboy registers
@@ -109,7 +109,8 @@ impl CPU
     /// Creates and returns a new instance of the GameBoy CPU
     pub fn new() -> Self
     {
-        let regs = Registers {
+        let regs = Registers 
+        {
             a: 0x0,
             b: 0x0,
             c: 0x0,
@@ -121,14 +122,16 @@ impl CPU
             pc: 0x0
         };
 
-        let flags = Flags {
+        let flags = Flags 
+        {
             z: false,
             n: false,
             h: false,
             c: false
         };
 
-        CPU {
+        CPU 
+        {
             regs: regs,
             flags: flags,
             mem: MMU::new(),
@@ -158,8 +161,6 @@ impl CPU
         // it took to execute
         let instruction = self.get_next_instruction();
         self.cycles = (instruction)(self);
-
-        // TODO: do something with the returned amount of cycles (timer stuff..)
     }
 
     /// Retrieve the next instruction to be executed

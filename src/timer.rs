@@ -28,7 +28,8 @@ impl Timer
     /// Create and return a new Timer instance
     pub fn new() -> Self
     {
-        Timer {
+        Timer 
+        {
             divider: 0u8,
             counter: 0u8,
             modulo: 0u8,
@@ -38,16 +39,13 @@ impl Timer
         }
     }
 
-    pub fn run_cycle(&mut self)
+    pub fn run_cycle(&mut self, cycles: u8)
     {
-        // If the timer isn't enabled we don't wanna do anything
-        if self.enabled
-        {
-        }
+        // TODO: figure out timer cycle
     }
 
     /// Read the value of a timer register at given address
-    pub fn read_byte(&mut self, addr: u16) -> u8
+    pub fn read_byte(&self, addr: u16) -> u8
     {
         match addr
         {

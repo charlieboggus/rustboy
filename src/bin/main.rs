@@ -1,7 +1,9 @@
 extern crate rustboy;
 extern crate sdl2;
 
-use rustboy::cpu::CPU;
+mod audio;
+mod display;
+mod input;
 
 fn main() 
 {

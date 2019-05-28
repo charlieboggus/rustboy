@@ -5,5 +5,5 @@ extern crate time;
 
 pub mod cpu;
 pub mod gpu;
-pub mod mem;
+pub mod mmu;
 pub mod timer;
