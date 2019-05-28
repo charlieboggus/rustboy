@@ -140,13 +140,13 @@ impl CPU
     }
 
     ///  Execute the next CPU cycle. Returns the number of cycles elapsed.
-    pub fn run_cycle(&mut self) -> u8
+    pub fn run_cycle(&mut self)
     {
         // Reset the cycles counter
         self.cycles = 0;
 
         // Interrupts
-        // TODO
+        // TODO: this
 
         // Halted
         if self.halted
@@ -160,7 +160,6 @@ impl CPU
         self.cycles = (instruction)(self);
 
         // TODO: do something with the returned amount of cycles (timer stuff..)
-        self.cycles
     }
 
     /// Retrieve the next instruction to be executed
@@ -202,6 +201,17 @@ impl CPU
         }
     }
 
+    fn handle_interrupts(&mut self) -> u8
+    {
+        0
+    }
+
+    /// Execute interrupt handler for the given interrupt
+    fn execute_interrupt(&mut self, it: u16)
+    {
+        // TODO: implement execute_interrupt
+    }
+
     /// Disable interrupts
     fn disable_interrupts(&mut self)
     {
@@ -234,11 +244,7 @@ impl CPU
         // TODO: implement STOP
     }
 
-    fn interrupt(&mut self)
-    {
-        // TODO: implement interrupt
-    }
-
+    /// Reset the CPU by setting the program counter to 0x0
     pub fn reset(&mut self)
     {
         self.regs.pc = 0x0;
@@ -278,13 +284,6 @@ impl CPU
         let b = self.fetch_byte(self.regs.sp);
         self.regs.sp += 1;
         b
-    }
-
-    /// Fetch a word from the given address
-    fn fetch_word(&mut self, addr: u16) -> u16
-    {
-        let w = self.mem.read_word(addr);
-        w
     }
 
     /// Returns the next immediate word
@@ -382,8 +381,8 @@ impl CPU
 // ---------------------------- BEGIN INSTRUCTIONS -----------------------------
 //
 //           http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf - pg. 65+
-//          why oh why does the gameboy have so many instructions.....
 //
+//          why oh why does the gameboy have so many instructions.....
 
 lazy_static!
 {
