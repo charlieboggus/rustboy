@@ -22,6 +22,10 @@ use crate::timer::Timer;
 
 pub struct MMU
 {
+    /// Interrupt Enable register. Bits 0-4 are toggled depending on the type of
+    /// interrupt that should be enabled.
+    ie: u8,
+
     /// Working RAM
     wram: [u8; 0x2000],
 
@@ -33,9 +37,6 @@ pub struct MMU
 
     /// Gameboy Timer instance
     timer: Timer,
-
-    // TODO: this is only temporary
-    memory: [u8; 65536],
 }
 
 impl MMU
@@ -45,20 +46,64 @@ impl MMU
     {
         MMU 
         {
-            wram: [0u8; 0x2000],
+            ie: 0x0,
+
+            wram: [0x0; 0x2000],
             
-            hram: [0u8; 0x7F],
+            hram: [0x0; 0x7F],
             
             gpu: GPU::new(),
 
             timer: Timer::new(),
-
-            memory: [0u8; 65536],
         }
     }
 
-    pub fn run_cycle(&mut self)
+    pub fn run_cycle(&mut self, cycles: u8)
     {
+        // TODO: figure out wtf vram cycles is
+        let vram_cycles = 0;
+        let gpu_cycles = cycles / 1 + vram_cycles;
+        let cpu_cycles = cycles + vram_cycles * 1;
+
+        // Run timer cycle
+        self.timer.run_cycle(cpu_cycles);
+        if self.timer.timer_interrupt() 
+        { 
+            self.ie |= 0x4; 
+        }
+        self.timer.set_timer_interrupt(false);
+
+        // Keypad interrupt
+        // TODO: this
+
+        // Run GPU cycle
+        self.gpu.run_cycle(gpu_cycles);
+        // TODO: update IE register based on GPU interrupt status
+        // TODO: then reset the GPU interrupt status flags
+
+        // Run SPU cycle
+        // TODO: this
+
+        // Serial Interrupt
+        // TODO: this
+    }
+
+    /// Get the next interrupt to handle based on the value stored in the IE
+    /// register
+    pub fn next_interrupt(&self) -> Option< Interrupt >
+    {
+        if self.ie & 0x1 != 0
+        {
+            Some(Interrupt::VBlank)
+        }
+        else if self.ie & 0x2 != 0
+        {
+            Some(Interrupt::LCDC)
+        }
+        else
+        {
+            None
+        }
     }
 
     /// Function to read a byte from memory at the given address
@@ -67,12 +112,14 @@ impl MMU
         match addr
         {
             // ROM
+            // TODO: implement cartridges or whatever
             0x0000...0x7FFF => 0x0,
 
             // VRAM
             0x8000...0x9FFF => self.gpu.read_byte(addr),
 
             // EXT RAM
+            // TODO: implement cartridges or whatever
             0xA000...0xBFFF => 0x0,
 
             // WRAM Bank 0
@@ -97,7 +144,7 @@ impl MMU
             0xFF80...0xFFFE => self.hram[(addr - 0xFF80) as usize],
 
             // IE Register
-            0xFFFF          => 0x0
+            0xFFFF          => self.ie
         }
     }
 
@@ -137,11 +184,8 @@ impl MMU
             0xFF80...0xFFFE => { self.hram[(addr - 0xFF80) as usize] = val; },
 
             // IE Register
-            0xFFFF          => { }
+            0xFFFF          => { self.ie = val; }
         }
-
-        // TODO: this is only temporary
-        self.memory[addr as usize] = val;
     }
 
     /// Function to read a word from memory at the given address
@@ -157,19 +201,7 @@ impl MMU
         self.write_byte(addr + 1, (val >> 8) as u8);
     }
 
-    /// Creates and returns a memory dump String for debugging
-    pub fn dump(&self) -> String
-    {
-        let mut dump = String::new();
-        for i in 0..self.memory.len()
-        {
-            let s = format!("{:#X}: {:#X}\n", i as u16, self.memory[i]);
-            dump.push_str(&s[..]);
-        }
-        
-        dump
-    }
-
+    /// Read a byte from an IO register
     fn read_io(&self, addr: u16) -> u8
     {
         match addr
@@ -202,6 +234,7 @@ impl MMU
         0
     }
 
+    /// Write a byte to an IO register
     fn write_io(&mut self, addr: u16, val: u8)
     {
         match addr
@@ -231,4 +264,15 @@ impl MMU
             _ => {  }
         }
     }
+}
+
+/// Gameboy Interrupts ordered by priority
+#[derive(Debug, Clone, Copy)]
+pub enum Interrupt
+{
+    VBlank,
+
+    LCDC,
+
+    Timer,
 }

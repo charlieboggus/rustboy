@@ -1,4 +1,4 @@
-use crate::mmu::MMU;
+use crate::mmu::{ MMU, Interrupt };
 use std::collections::HashMap;
 
 /// Represents all of the Gameboy registers
@@ -89,7 +89,7 @@ pub struct CPU
     flags: Flags,
     
     /// CPU Memory Management Unit
-    mem: MMU,
+    mmu: MMU,
 
     /// Interrupt Master Enable flag: Reset by the DI and prohibits all interrupts
     ime: bool,
@@ -134,7 +134,7 @@ impl CPU
         {
             regs: regs,
             flags: flags,
-            mem: MMU::new(),
+            mmu: MMU::new(),
             ime: true,
             imen: true,
             halted: false,
@@ -148,19 +148,32 @@ impl CPU
         // Reset the cycles counter
         self.cycles = 0;
 
-        // Interrupts
-        // TODO: this
+        // Handle Interrupts
+        if self.ime
+        {
+            if let Some(interrupt) = self.mmu.next_interrupt()
+            {
+                self.process_interrupt(interrupt);
+                // TODO: do something with cycles? return maybe?
+            }
+        }
+        else
+        {
+            self.ime = self.imen;
+        }
 
-        // Halted
+        // CPU is Halted and is waiting for interrupt
         if self.halted
         {
             // TODO: this
         }
 
-        // Fetch and run the next instruction and return number of cycles 
-        // it took to execute
+        // Fetch and run the next instruction & get number of cycles it took
         let instruction = self.get_next_instruction();
         self.cycles = (instruction)(self);
+
+        // run a cycle for the other systems
+        self.mmu.run_cycle(self.cycles);
     }
 
     /// Retrieve the next instruction to be executed
@@ -202,15 +215,29 @@ impl CPU
         }
     }
 
-    fn handle_interrupts(&mut self) -> u8
-    {
-        0
-    }
-
     /// Execute interrupt handler for the given interrupt
-    fn execute_interrupt(&mut self, it: u16)
+    fn process_interrupt(&mut self, it: Interrupt)
     {
-        // TODO: implement execute_interrupt
+        // If CPU is halted, unhalt it to process the interrupt
+        self.halted = false;
+        
+        // Disable interrupts before entering an interrupt handler
+        self.disable_interrupts();
+
+        // Get the interrupt handler address for the type of interrupt
+        let handler_addr = match it 
+        {
+            Interrupt::VBlank   => 0x40,
+            Interrupt::LCDC     => 0x48,
+            Interrupt::Timer    => 0x50,
+        };
+
+        // Push current program counter onto stack
+        let pc = self.regs.pc;
+        self.push_word(pc);
+
+        // Jump to interrupt handler
+        self.regs.pc = handler_addr;
     }
 
     /// Disable interrupts
@@ -254,7 +281,7 @@ impl CPU
     /// Fetch a byte from the given address
     fn fetch_byte(&mut self, addr: u16) -> u8
     {
-        let b = self.mem.read_byte(addr);
+        let b = self.mmu.read_byte(addr);
         b
     }
 
@@ -269,7 +296,7 @@ impl CPU
     /// Store a byte at the given address
     fn store_byte(&mut self, addr: u16, byte: u8)
     {
-        self.mem.write_byte(addr, byte);
+        self.mmu.write_byte(addr, byte);
     }
 
     /// Push one byte onto the stack and decrement the stack pointer
@@ -292,14 +319,13 @@ impl CPU
     {
         let b1 = self.next_byte() as u16;
         let b2 = self.next_byte() as u16;
-
         b1 | (b2 << 8)
     }
 
     /// Store a word at the given address
     fn store_word(&mut self, addr: u16, word: u16)
     {
-        self.mem.write_word(addr, word);
+        self.mmu.write_word(addr, word);
     }
 
     /// Push two bytes onto the stack and decrement the stack pointer twice
@@ -314,7 +340,6 @@ impl CPU
     {
         let lo = self.pop_byte() as u16;
         let hi = self.pop_byte() as u16;
-
         (hi << 8) | lo
     }
 

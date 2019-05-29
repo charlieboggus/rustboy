@@ -20,7 +20,13 @@ pub struct Timer
     interrupt: bool,
 
     /// Timer speed (TODO: better description)
-    step: u32
+    step: u32,
+
+    /// Internal divider used for fixed rate counting of divider
+    internal_divider: u32,
+
+    /// Internal counter used for fixed rate counting of counter
+    internal_counter: u32,
 }
 
 impl Timer
@@ -36,12 +42,37 @@ impl Timer
             enabled: false,
             interrupt: false,
             step: 0u32,
+            internal_divider: 0u32,
+            internal_counter: 0u32
         }
     }
 
+    /// Function to execute a cycle of the timer
     pub fn run_cycle(&mut self, cycles: u8)
     {
-        // TODO: figure out timer cycle
+        // Increment the Divider register at a fixed rate
+        self.internal_divider += cycles as u32;
+        while self.internal_divider >= 256
+        {
+            self.divider += 1;
+            self.internal_divider -= 256;
+        }
+
+        if self.enabled
+        {
+            // Increment the counter register at a fixed rate
+            self.internal_counter += cycles as u32;
+            while self.internal_counter >= self.step
+            {
+                self.counter += 1;
+                if self.counter == 0
+                {
+                    self.counter = self.modulo;
+                    self.interrupt = true;
+                }
+                self.internal_counter -= self.step;
+            }
+        }
     }
 
     /// Read the value of a timer register at given address
@@ -59,18 +90,19 @@ impl Timer
             0xFF06 => self.modulo,
 
             // Reads the control register
-            0xFF07 => {
+            0xFF07 => 
+            {
                 // Value to return for the control register
                 let mut control = 0x0;
 
                 // Turn on bits 0/1 depending on timer speed
                 control |= match self.step 
                 {
-                    16 => 0x1,
-                    64 => 0x2,
-                    256 => 0x3,
-                    1024 => 0x0,
-                    _ => 0x0
+                    16      => 0x1,
+                    64      => 0x2,
+                    256     => 0x3,
+                    1024    => 0x0,
+                    _       => 0x0
                 };
 
                 // If the timer is enabled turn on bit 2
@@ -99,7 +131,8 @@ impl Timer
             0xFF06 => { self.modulo = b; },
 
             // Timer control register
-            0xFF07 => {
+            0xFF07 => 
+            {
                 // Bits 0-1: determines the speed of the timer
                 match b & 0x3
                 {
@@ -131,20 +164,14 @@ impl Timer
     }
 
     /// Returns the timer's interrupt status
-    pub fn interrupt_status(&self) -> bool
+    pub fn timer_interrupt(&self) -> bool
     {
         self.interrupt
     }
 
-    /// Acknowledge an interrupt
-    pub fn ok_interrupt(&mut self)
+    /// Set the value of the timer interrupt flag
+    pub fn set_timer_interrupt(&mut self, b: bool)
     {
-        self.interrupt = false;
-    }
-
-    /// Force the interrupt state
-    pub fn force_interrupt(&mut self, state: bool)
-    {
-        self.interrupt = state;
+        self.interrupt = b;
     }
 }
