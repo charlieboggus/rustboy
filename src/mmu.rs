@@ -66,19 +66,14 @@ impl MMU
 
     pub fn run_cycle(&mut self, ticks: u32)
     {
-        // TODO: figure out wtf vram cycles is
-        let vram_cycles = 0;
-        let gpu_cycles = ticks / 1 + vram_cycles;
-        let cpu_cycles = ticks + vram_cycles * 1;
-
         // Run timer cycle
-        self.timer.run_cycle(cpu_cycles, &mut self.intf);
+        self.timer.run_cycle(ticks, &mut self.intf);
 
         // Keypad interrupt
         // TODO: this
 
         // Run GPU cycle
-        self.gpu.run_cycle(gpu_cycles, &mut self.intf);
+        self.gpu.run_cycle(ticks, &mut self.intf);
 
         // Run SPU cycle
         // TODO: this

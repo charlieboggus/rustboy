@@ -5,6 +5,8 @@ pub const WIDTH: usize = 160;
 /// Height of the GameBoy screen in pixels
 pub const HEIGHT: usize = 144;
 
+const NUM_TILES: usize = 384;
+
 /// The color palette for the Gameboy. Possible values:
 /// 
 /// 0 - White, 
@@ -25,6 +27,12 @@ pub struct GPU
 {
     /// Data about what is currently being displayed on screen
     image_data: [u8; WIDTH * HEIGHT * 4],
+
+    /// Compiled palettes
+    pal: Palette,
+
+    /// Compiled tiles
+    tiles: Tiles,
 
     /// Internal GPU clock
     clock: u32,
@@ -101,6 +109,16 @@ impl GPU
         GPU 
         {
             image_data: [0u8; WIDTH * HEIGHT * 4],
+            pal: Palette { 
+                bg: [[0; 4]; 4], 
+                obp0: [[0; 4]; 4], 
+                obp1: [[0; 4]; 4] 
+            },
+            tiles: Tiles { 
+                data: [[[0; 8]; 8]; NUM_TILES * 2], 
+                dirty: false, 
+                to_update: [false; NUM_TILES * 2] 
+            },
             clock: 0u32,
             vram: [0u8; 0x2000],
             oam: [0u8; 0xA0],
@@ -118,11 +136,149 @@ impl GPU
         }
     }
 
+    /// Clears the screen to blank white
+    pub fn clear(&mut self)
+    {
+        for pixel in self.image_data.iter_mut()
+        {
+            *pixel = 0xFF;
+        }
+    }
+
+    /// Run a cycle of the GPU
     pub fn run_cycle(&mut self, ticks: u32, intf: &mut u8)
+    {
+        self.clock += ticks;
+        
+        // If clock >= 456 then an entire line has been completed
+        if self.clock >= 456
+        {
+            self.clock -= 456;
+            self.ly = (self.ly + 1) % 154;
+
+            if self.ly >= 144 && self.stat.mode != Mode::VBlank
+            {
+                self.switch_mode(Mode::VBlank, intf);
+            }
+
+            if self.ly == self.lyc && self.stat.lycly
+            {
+                *intf |= 0x02;
+            }
+        }
+
+        // Switch modes if we're not in VBlank
+        if self.ly < 144
+        {
+            if self.clock <= 80
+            {
+                if self.stat.mode != Mode::RdOAM { self.switch_mode(Mode::RdOAM, intf); }
+            }
+            else if self.clock <= 252
+            {
+                if self.stat.mode != Mode::RdVRAM { self.switch_mode(Mode::RdVRAM, intf); }
+            }
+            else
+            {
+                if  self.stat.mode != Mode::HBlank { self.switch_mode(Mode::HBlank, intf); }
+            }
+        }
+    }
+
+    fn switch_mode(&mut self, mode: Mode, intf: &mut u8)
+    {
+        self.stat.mode = mode;
+        match mode
+        {
+            Mode::HBlank => 
+            {
+                self.render_line();
+                if self.stat.mode0_hblank
+                {
+                    *intf |= 0x02;
+                }
+            },
+
+            Mode::VBlank => 
+            {
+                *intf |= 0x01;
+                if self.stat.mode1_vblank
+                {
+                    *intf |= 0x02;
+                }
+            },
+
+            Mode::RdOAM => 
+            {
+                if self.stat.mode2_oam
+                {
+                    *intf |= 0x02;
+                }
+            },
+
+            Mode::RdVRAM => { }
+        }
+    }
+
+    fn render_line(&mut self)
+    {
+        if !self.lcdc.lcd_enable { return }
+
+        let mut scanline = [0u8; WIDTH];
+
+        if self.tiles.dirty
+        {
+            self.update_tileset();
+            self.tiles.dirty = false;
+        }
+
+        if self.lcdc.bg_enable
+        {
+            self.render_background(&mut scanline);
+        }
+
+        if self.lcdc.win_enable
+        {
+            self.render_window(&mut scanline);
+        }
+
+        if self.lcdc.obj_enable
+        {
+            self.render_sprites(&mut scanline);
+        }
+    }
+
+    fn update_tileset(&mut self)
+    {
+        let tiles = &mut self.tiles;
+        let iter = tiles.to_update.iter_mut();
+        for (i, slot) in iter.enumerate().filter(|&(_, &mut i)| i)
+        {
+            *slot = false;
+            for j in 0..8
+            {
+                let addr = ((i % NUM_TILES) * 16) + j * 2;
+                let (mut lsb, mut msb) = (self.vram[addr], self.vram[addr + 1]);
+
+                for k in (0..8).rev()
+                {
+                    tiles.data[i][j][k] = ((msb & 1) << 1) | (lsb & 1);
+                    lsb >>= 1;
+                    msb >>= 1;
+                }
+            }
+        }
+    }
+
+    fn render_background(&mut self, scanline: &mut [u8; WIDTH])
     {
     }
 
-    fn set_mode(&mut self, mode: Mode)
+    fn render_window(&mut self, scanline: &mut [u8; WIDTH])
+    {
+    }
+
+    fn render_sprites(&mut self, scanline: &mut [u8; WIDTH])
     {
     }
     
@@ -138,10 +294,32 @@ impl GPU
             0xFE00...0xFE9F => self.oam[(addr - 0xFE00) as usize],
 
             // LCDC
-            0xFF40 => 0,
+            0xFF40 => {
+                let mut b = 0x0;
+                if self.lcdc.lcd_enable     { b |= 0x80; }
+                if self.lcdc.win_tmap       { b |= 0x40; }
+                if self.lcdc.win_enable     { b |= 0x20; }
+                if self.lcdc.tile_data      { b |= 0x10; }
+                if self.lcdc.bg_tmap        { b |= 0x8; }
+                if self.lcdc.obj_size       { b |= 0x4; }
+                if self.lcdc.obj_enable     { b |= 0x2; }
+                if self.lcdc.bg_enable      { b |= 0x1; }
+
+                b
+            },
 
             // LCDC Stat
-            0xFF41 => 0,
+            0xFF41 => {
+                let mut b = 0x0;
+                if self.stat.lycly              { b |= 0x40; }
+                if self.stat.mode2_oam          { b |= 0x20; }
+                if self.stat.mode1_vblank       { b |= 0x10; }
+                if self.stat.mode0_hblank       { b |= 0x8; }
+                if self.stat.coincidence_flag   { b |= 0x4; }
+                b |= self.stat.mode as u8;
+
+                b
+            },
 
             // LCDC BG Y pos
             0xFF42 => self.scy,
@@ -188,11 +366,39 @@ impl GPU
             // Write byte to OAM
             0xFE00...0xFE9F => self.oam[(addr - 0xFE00) as usize] = b,
 
-            // LCDC
-            0xFF40 => {  },
+            // Write a byte to LCDC Register
+            0xFF40 => {
+                self.lcdc.lcd_enable = if b & 0x80 != 0 { true } else { false };
+                self.lcdc.win_tmap = if b & 0x40 != 0 { true } else { false };
+                self.lcdc.win_enable = if b & 0x20 != 0 { true } else { false };
+                self.lcdc.tile_data = if b & 0x10 != 0 { true } else { false };
+                self.lcdc.bg_tmap = if b & 0x8 != 0 { true } else { false };
+                self.lcdc.obj_size = if b & 0x4 != 0 { true } else { false };
+                self.lcdc.obj_enable = if b & 0x2 != 0 { true } else { false };
+                self.lcdc.bg_enable = if b & 0x1 != 0 { true } else { false };
+            },
             
-            // LCDC Stat
-            0xFF41 => {  },
+            // Write a byte to LCDC Status Register
+            0xFF41 => {
+                self.stat.lycly = if b & 0x40 != 0 { true } else { false };
+                self.stat.mode2_oam = if b & 0x20 != 0 { true } else { false };
+                self.stat.mode1_vblank = if b & 0x10 != 0 { true } else { false };
+                self.stat.mode0_hblank = if b & 0x8 != 0 { true } else { false };
+                self.stat.coincidence_flag = if b & 0x4 != 0 { true } else { false };
+                self.stat.mode = 
+                if b & 0x3 != 0 {
+                    Mode::RdVRAM 
+                } 
+                else if b & 0x2 != 0 { 
+                    Mode::RdOAM 
+                } 
+                else if b & 0x1 != 0 { 
+                    Mode::VBlank 
+                } 
+                else { 
+                    Mode::HBlank 
+                };
+            },
 
             // LCDC BG Y pos
             0xFF42 => self.scy = b,
@@ -316,4 +522,11 @@ struct Palette
     bg: [Color; 4],
     obp0: [Color; 4],
     obp1: [Color; 4]
+}
+
+struct Tiles
+{
+    data: [[[u8; 8]; 8]; NUM_TILES * 2],
+    dirty: bool,
+    to_update: [bool; NUM_TILES * 2]
 }
