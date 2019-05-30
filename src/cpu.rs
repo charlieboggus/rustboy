@@ -1,4 +1,4 @@
-use crate::mmu::{ MMU, Interrupt };
+use crate::mmu::MMU;
 use std::collections::HashMap;
 
 /// Represents all of the Gameboy registers
@@ -94,14 +94,13 @@ pub struct CPU
     /// Interrupt Master Enable flag: Reset by the DI and prohibits all interrupts
     ime: bool,
 
-    /// Interrupt Mode Enable after next instruction flag
-    imen: bool,
-
     /// CPU halted flag
-    halted: bool,
+    halt: bool,
 
-    /// Number of cycles elapsed running the current instruction
-    cycles: u8
+    /// CPU stopped flag
+    stop: bool,
+
+    delay: u32
 }
 
 impl CPU
@@ -111,15 +110,15 @@ impl CPU
     {
         let regs = Registers 
         {
-            a: 0x0,
-            b: 0x0,
-            c: 0x0,
-            d: 0x0,
-            e: 0x0,
-            h: 0x0,
-            l: 0x0,
-            sp: 0x0,
-            pc: 0x0
+            a: 0x01,
+            b: 0x00,
+            c: 0x13,
+            d: 0x00,
+            e: 0xD8,
+            h: 0x01,
+            l: 0x4D,
+            sp: 0xFFFE,
+            pc: 0x0100
         };
 
         let flags = Flags 
@@ -136,44 +135,73 @@ impl CPU
             flags: flags,
             mmu: MMU::new(),
             ime: true,
-            imen: true,
-            halted: false,
-            cycles: 0u8
+            halt: false,
+            stop: false,
+            delay: 0u32
         }
     }
 
     ///  Execute the next CPU cycle. Returns the number of cycles elapsed.
-    pub fn run_cycle(&mut self)
+    pub fn exec(&mut self)
     {
-        // Reset the cycles counter
-        self.cycles = 0;
-
-        // Handle Interrupts
-        if self.ime
+        // Update IME
+        match self.delay
         {
-            if let Some(interrupt) = self.mmu.next_interrupt()
-            {
-                self.process_interrupt(interrupt);
-                // TODO: do something with cycles? return maybe?
-            }
+            0 => {},
+            1 => { self.delay = 0; self.ime = true; },
+            2 => { self.delay = 1; }
+            _ => {}
+        }
+
+        // Handle Interrupts & get returned number of ticks
+        let int = self.handle_interrupts();
+
+        // Number of ticks elapsed this cycle
+        let ticks = if int != 0 
+        { 
+            int 
+        } 
+        else if self.halt 
+        { 
+            4 
+        } 
+        else 
+        { 
+            let instr = self.get_next_instruction(); 
+            (instr)(self) as u32 
+        };
+
+        // Execute an MMU cycle
+        self.mmu.run_cycle(ticks);
+    }
+
+    fn handle_interrupts(&mut self) -> u32
+    {
+        if !self.ime && !self.halt
+        {
+            return 0
+        }
+
+        let ints = self.mmu.intf & self.mmu.inte;
+        if ints != 0
+        {
+            let i = ints.trailing_zeros();
+
+            self.mmu.intf &= !(1 << (i as u32));
+            self.ime = false;
+            self.halt = false;
+            self.stop = false;
+
+            let pc = self.regs.pc;
+            self.push_word(pc);
+            self.regs.pc = 0x0040 | ((i as u16) << 3);
+
+            16
         }
         else
         {
-            self.ime = self.imen;
+            0
         }
-
-        // CPU is Halted and is waiting for interrupt
-        if self.halted
-        {
-            // TODO: this
-        }
-
-        // Fetch and run the next instruction & get number of cycles it took
-        let instruction = self.get_next_instruction();
-        self.cycles = (instruction)(self);
-
-        // run a cycle for the other systems
-        self.mmu.run_cycle(self.cycles);
     }
 
     /// Retrieve the next instruction to be executed
@@ -215,61 +243,36 @@ impl CPU
         }
     }
 
-    /// Execute interrupt handler for the given interrupt
-    fn process_interrupt(&mut self, it: Interrupt)
+    /// Schedules an enabling of interrupts
+    fn ei(&mut self)
     {
-        // If CPU is halted, unhalt it to process the interrupt
-        self.halted = false;
-        
-        // Disable interrupts before entering an interrupt handler
-        self.disable_interrupts();
-
-        // Get the interrupt handler address for the type of interrupt
-        let handler_addr = match it 
+        if self.delay == 2 || self.mmu.read_byte(self.regs.pc) == 0x76
         {
-            Interrupt::VBlank   => 0x40,
-            Interrupt::LCDC     => 0x48,
-            Interrupt::Timer    => 0x50,
-        };
-
-        // Push current program counter onto stack
-        let pc = self.regs.pc;
-        self.push_word(pc);
-
-        // Jump to interrupt handler
-        self.regs.pc = handler_addr;
+            self.delay = 1;
+        }
+        else
+        {
+            self.delay = 2;
+        }
     }
 
-    /// Disable interrupts
-    fn disable_interrupts(&mut self)
+    /// Schedules a disabling of interrupts
+    fn di(&mut self)
     {
         self.ime = false;
-        self.imen = false;
-    }
-
-    /// Enable interrupts immediately
-    fn enable_interrupts(&mut self)
-    {
-        self.ime = true;
-        self.imen = true;
-    }
-
-    /// Enable interrupts after next instruction
-    fn enable_interrupts_after_next(&mut self)
-    {
-        self.imen = true;
+        self.delay = 0;
     }
 
     /// Halt and wait for interrupts
     fn halt(&mut self)
     {
-        self.halted = true;
+        self.halt = true;
     }
 
     /// Stop CPU and LCD display until button press
     fn stop(&mut self)
     {
-        // TODO: implement STOP
+        self.stop = true;
     }
 
     /// Reset the CPU by setting the program counter to 0x0
@@ -3294,17 +3297,17 @@ fn stop(cpu: &mut CPU) -> u8
     4
 }
 
-/// Disable interrupts but not immediately. Disabled after next instruction
+/// Schedules a disabling of interrupts
 fn di(cpu: &mut CPU) -> u8
 {
-    cpu.disable_interrupts();
+    cpu.di();
     4
 }
 
-/// Enables interrupts but not immediately. Enabled after next instruction
+/// Schedules an enabling of interrupts
 fn ei(cpu: &mut CPU) -> u8
 {
-    cpu.enable_interrupts_after_next();
+    cpu.ei();
     4
 }
 
@@ -4479,6 +4482,6 @@ fn reti(cpu: &mut CPU) -> u8
 {
     let addr = cpu.pop_word();
     cpu.regs.pc = addr;
-    cpu.enable_interrupts();
+    cpu.ei();
     8
 }

@@ -16,9 +16,6 @@ pub struct Timer
     /// True if the timer is enabled and is counting/generating interrupts
     enabled: bool,
 
-    /// True if the timer has an interrupt pending
-    interrupt: bool,
-
     /// Timer speed (TODO: better description)
     step: u32,
 
@@ -40,7 +37,6 @@ impl Timer
             counter: 0u8,
             modulo: 0u8,
             enabled: false,
-            interrupt: false,
             step: 0u32,
             internal_divider: 0u32,
             internal_counter: 0u32
@@ -48,10 +44,10 @@ impl Timer
     }
 
     /// Function to execute a cycle of the timer
-    pub fn run_cycle(&mut self, cycles: u8)
+    pub fn run_cycle(&mut self, ticks: u32, intf: &mut u8)
     {
         // Increment the Divider register at a fixed rate
-        self.internal_divider += cycles as u32;
+        self.internal_divider += ticks;
         while self.internal_divider >= 256
         {
             self.divider += 1;
@@ -61,14 +57,14 @@ impl Timer
         if self.enabled
         {
             // Increment the counter register at a fixed rate
-            self.internal_counter += cycles as u32;
+            self.internal_counter += ticks;
             while self.internal_counter >= self.step
             {
                 self.counter += 1;
                 if self.counter == 0
                 {
                     self.counter = self.modulo;
-                    self.interrupt = true;
+                    *intf |= 0x04;
                 }
                 self.internal_counter -= self.step;
             }
@@ -161,17 +157,5 @@ impl Timer
             // Timer cannot write to any other addresses
             _ => panic!("Timer cannot write to address {:#X}!", addr)
         }
-    }
-
-    /// Returns the timer's interrupt status
-    pub fn timer_interrupt(&self) -> bool
-    {
-        self.interrupt
-    }
-
-    /// Set the value of the timer interrupt flag
-    pub fn set_timer_interrupt(&mut self, b: bool)
-    {
-        self.interrupt = b;
     }
 }

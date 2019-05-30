@@ -22,9 +22,13 @@ use crate::timer::Timer;
 
 pub struct MMU
 {
+
     /// Interrupt Enable register. Bits 0-4 are toggled depending on the type of
     /// interrupt that should be enabled.
-    ie: u8,
+    pub inte: u8,
+
+    /// Interrupt Flag register
+    pub intf: u8,
 
     /// Working RAM
     wram: [u8; 0x2000],
@@ -46,7 +50,9 @@ impl MMU
     {
         MMU 
         {
-            ie: 0x0,
+            inte: 0x0,
+
+            intf: 0x0,
 
             wram: [0x0; 0x2000],
             
@@ -58,52 +64,27 @@ impl MMU
         }
     }
 
-    pub fn run_cycle(&mut self, cycles: u8)
+    pub fn run_cycle(&mut self, ticks: u32)
     {
         // TODO: figure out wtf vram cycles is
         let vram_cycles = 0;
-        let gpu_cycles = cycles / 1 + vram_cycles;
-        let cpu_cycles = cycles + vram_cycles * 1;
+        let gpu_cycles = ticks / 1 + vram_cycles;
+        let cpu_cycles = ticks + vram_cycles * 1;
 
         // Run timer cycle
-        self.timer.run_cycle(cpu_cycles);
-        if self.timer.timer_interrupt() 
-        { 
-            self.ie |= 0x4; 
-        }
-        self.timer.set_timer_interrupt(false);
+        self.timer.run_cycle(cpu_cycles, &mut self.intf);
 
         // Keypad interrupt
         // TODO: this
 
         // Run GPU cycle
-        self.gpu.run_cycle(gpu_cycles);
-        // TODO: update IE register based on GPU interrupt status
-        // TODO: then reset the GPU interrupt status flags
+        self.gpu.run_cycle(gpu_cycles, &mut self.intf);
 
         // Run SPU cycle
         // TODO: this
 
         // Serial Interrupt
         // TODO: this
-    }
-
-    /// Get the next interrupt to handle based on the value stored in the IE
-    /// register
-    pub fn next_interrupt(&self) -> Option< Interrupt >
-    {
-        if self.ie & 0x1 != 0
-        {
-            Some(Interrupt::VBlank)
-        }
-        else if self.ie & 0x2 != 0
-        {
-            Some(Interrupt::LCDC)
-        }
-        else
-        {
-            None
-        }
     }
 
     /// Function to read a byte from memory at the given address
@@ -144,7 +125,7 @@ impl MMU
             0xFF80...0xFFFE => self.hram[(addr - 0xFF80) as usize],
 
             // IE Register
-            0xFFFF          => self.ie
+            0xFFFF          => self.inte
         }
     }
 
@@ -157,34 +138,34 @@ impl MMU
             0x0000...0x7FFF => { },
 
             // VRAM
-            0x8000...0x9FFF => { self.gpu.write_byte(addr, val); },
+            0x8000...0x9FFF => self.gpu.write_byte(addr, val),
 
             // EXT RAM
             0xA000...0xBFFF => { },
 
             // WRAM Bank 0
-            0xC000...0xCFFF => { self.wram[(addr - 0xC000) as usize] = val; },
+            0xC000...0xCFFF => self.wram[(addr - 0xC000) as usize] = val,
 
             // WRAM Bank 1
-            0xD000...0xDFFF => { self.wram[(addr - 0xD000) as usize] = val; },
+            0xD000...0xDFFF => self.wram[(addr - 0xD000) as usize] = val,
 
             // WRAM ECHO
-            0xE000...0xFDFF => { self.wram[(addr - 0xE000) as usize] = val; },
+            0xE000...0xFDFF => self.wram[(addr - 0xE000) as usize] = val,
 
             // OAM
-            0xFE00...0xFE9F => { self.gpu.write_byte(addr, val); },
+            0xFE00...0xFE9F => self.gpu.write_byte(addr, val),
 
             // Unused
             0xFEA0...0xFEFF => { },
 
             // IO registers
-            0xFF00...0xFF7F => { self.write_io(addr, val); },
+            0xFF00...0xFF7F => self.write_io(addr, val),
 
             // HRAM
-            0xFF80...0xFFFE => { self.hram[(addr - 0xFF80) as usize] = val; },
+            0xFF80...0xFFFE => self.hram[(addr - 0xFF80) as usize] = val,
 
             // IE Register
-            0xFFFF          => { self.ie = val; }
+            0xFFFF          => self.inte = val
         }
     }
 
@@ -207,31 +188,29 @@ impl MMU
         match addr
         {
             // Input
-            0xFF00 => {  },
+            0xFF00 => 0x0,
 
             // Serial Data
-            0xFF01 => {  },
+            0xFF01 => 0x0,
 
             // Serial Control
-            0xFF02 => {  },
+            0xFF02 => 0x0,
 
             // Timer
-            0xFF04...0xFF07 => { return self.timer.read_byte(addr); }
+            0xFF04...0xFF07 => self.timer.read_byte(addr),
 
             // Interrupt Flag Register
-            0xFF0F => {  },
+            0xFF0F => self.intf,
 
             // SPU
             // TODO: implement sound later
-            0xFF10...0xFF3F => {  },
+            0xFF10...0xFF3F => 0x0,
 
             // GPU
-            0xFF40...0xFF4B => { return self.gpu.read_byte(addr); }
+            0xFF40...0xFF4B => self.gpu.read_byte(addr),
 
-            _ => {  }
+            _ => panic!("Address {:#X} is not mapped to an IO Register!")
         }
-
-        0
     }
 
     /// Write a byte to an IO register
@@ -249,19 +228,19 @@ impl MMU
             0xFF02 => {  },
 
             // Timer
-            0xFF04...0xFF07 => { self.timer.write_byte(addr, val); }
+            0xFF04...0xFF07 => self.timer.write_byte(addr, val),
 
             // Interrupt Flag Register
-            0xFF0F => {  },
+            0xFF0F => self.intf = val,
 
             // SPU... implement sound later
             // TODO: this
             0xFF10...0xFF3F => {  },
 
             // GPU
-            0xFF40...0xFF4B => { self.gpu.write_byte(addr, val); },
+            0xFF40...0xFF4B => self.gpu.write_byte(addr, val),
 
-            _ => {  }
+            _ => panic!("Address {:#X} is not mapped to an IO Register!")
         }
     }
 }
