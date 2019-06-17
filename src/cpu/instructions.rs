@@ -14,71 +14,6 @@ const H: u8 = 0x20;
 /// Location of the Carry Flag byte
 const C: u8 = 0x10;
 
-fn add(a: u16, b: u8) -> u16
-{
-    (a as i16 + (b as i8 as i16)) as u16
-}
-
-fn daa(r: &mut Registers)
-{
-    // TODO: this
-}
-
-fn inc_hlm(r: &mut Registers, m: &mut Memory)
-{
-    let hl = r.hl();
-    let k = m.read_byte(hl) + 1;
-    m.write_byte(hl, k);
-    r.f = (r.f & C) | if k != 0 { 0 } else { Z } | if k & 0xF == 0 { H } else { 0 };
-}
-
-fn dec_hlm(r: &mut Registers, m: &mut Memory)
-{
-    let hl = r.hl();
-    let k = m.read_byte(hl) - 1;
-    m.write_byte(hl, k);
-    r.f = (r.f & C) | if k != 0 { 0 } else { Z } | if k & 0xF == 0 { H } else { 0 };
-}
-
-fn ld_hlspn(r: &mut Registers, m: &mut Memory)
-{
-    // TODO: this
-}
-
-fn ld_ioan(r: &mut Registers, m: &mut Memory)
-{
-    let n = m.read_byte(r.adv());
-    m.write_byte(0xFF00 | (n as u16), r.a);
-}
-
-fn add_spn(r: &mut Registers, m: &mut Memory)
-{
-    let b = m.read_byte(r.adv()) as i8 as i16 as u16;
-    let res = r.sp + b;
-    let tmp = b ^ res ^ r.sp;
-    r.f = if tmp & 0x100 != 0 { C } else { 0 } | if tmp & 0x010 != 0 { H } else { 0 };
-    r.sp = res;
-}
-
-fn add_hlsp(r: &mut Registers, m: &mut Memory)
-{
-    let s = r.hl() as u32 + r.sp as u32;
-    r.f = if r.hl() as u32 & 0xFFF > s & 0xFFF { H } else { 0 } | 
-             if s > 0xFFFF { C } else { 0 } | 
-             (r.f & Z);
-    r.h = (s >> 8) as u8;
-    r.l = s as u8;
-}
-
-fn pop_af(r: &mut Registers, m: &mut Memory)
-{
-    r.f = m.read_byte(r.sp) & 0xF0;
-    r.a = m.read_byte(r.sp + 1);
-    r.sp += 2;
-}
-
-fn xx() -> u32 { 0 }
-
 /// Execute the instruction for the given opcode and return number of cycles
 pub fn exec(opcode: u8, cpu: &mut CPU, mem: &mut Memory) -> u32
 {
@@ -511,7 +446,7 @@ pub fn exec(opcode: u8, cpu: &mut CPU, mem: &mut Memory) -> u32
         0xC5 => push!(b, c),                                        // PUSH BC
         0xD5 => push!(d, e),                                        // PUSH DE
         0xE5 => push!(h, l),                                        // PUSH HL
-        0xF1 => pop!(a, f),                                         // POP AF
+        0xF1 => { pop_af(regs, mem); 3 },                           // POP AF
         0xC1 => pop!(b, c),                                         // POP BC
         0xD1 => pop!(d, e),                                         // POP DE
         0xE1 => pop!(h, l),                                         // POP HL
@@ -612,7 +547,7 @@ pub fn exec(opcode: u8, cpu: &mut CPU, mem: &mut Memory) -> u32
         0x09 => add_hl!(regs.bc()),                                 // ADD HL, BC
         0x19 => add_hl!(regs.de()),                                 // ADD HL, DE
         0x29 => add_hl!(regs.hl()),                                 // ADD HL, HL
-        0x39 => { add_hlsp(regs, mem); 2 },                         // ADD HL, SP
+        0x39 => { add_hlsp(regs); 2 },                         // ADD HL, SP
         0xE8 => { add_spn(regs, mem); 4 },                          // ADD SP, #
         0x03 => inc_word!(b, c),                                    // INC BC
         0x13 => inc_word!(d, e),                                    // INC DE
@@ -691,6 +626,8 @@ pub fn exec(opcode: u8, cpu: &mut CPU, mem: &mut Memory) -> u32
 /// cycles it took to execute
 fn exec_cb(opcode: u8, cpu: &mut CPU, mem: &mut Memory) -> u32
 {
+    // TODO: comments/rustdocs for everything in this function
+
     let mut regs = &mut cpu.regs;
 
     /// Swap the upper and lower nibbles of the given value
@@ -1055,3 +992,109 @@ fn exec_cb(opcode: u8, cpu: &mut CPU, mem: &mut Memory) -> u32
         0xBE => { hlfrob!(hl, hl & !(1 << 7)); 4 }                  // RES 7HLm
     }
 }
+
+fn add(a: u16, b: u8) -> u16
+{
+    (a as i16 + (b as i8 as i16)) as u16
+}
+
+fn daa(r: &mut Registers)
+{
+    if r.f & N == 0
+    {
+        if r.f & C != 0 || r.a > 0x99
+        {
+            r.a += 0x60;
+            r.f |= C;
+        }
+
+        if r.f & H != 0 || (r.a & 0xF) > 0x9
+        {
+            r.a += 0x06;
+            r.f &= !H;
+        }
+    }
+    else if r.f & C != 0 && r.f & H != 0
+    {
+        r.a += 0x9A;
+        r.f &= !H;
+    }
+    else if r.f & C != 0
+    {
+        r.a += 0xA0;
+    }
+    else if r.f & H != 0
+    {
+        r.a += 0xFA;
+        r.f &= !H;
+    }
+
+    if r.a == 0
+    {
+        r.f |= Z;
+    }
+    else
+    {
+        r.f &= !Z;
+    }
+}
+
+fn inc_hlm(r: &mut Registers, m: &mut Memory)
+{
+    let hl = r.hl();
+    let k = m.read_byte(hl) + 1;
+    m.write_byte(hl, k);
+    r.f = (r.f & C) | if k != 0 { 0 } else { Z } | if k & 0xF == 0 { H } else { 0 };
+}
+
+fn dec_hlm(r: &mut Registers, m: &mut Memory)
+{
+    let hl = r.hl();
+    let k = m.read_byte(hl) - 1;
+    m.write_byte(hl, k);
+    r.f = (r.f & C) | if k != 0 { 0 } else { Z } | if k & 0xF == 0 { H } else { 0 };
+}
+
+fn ld_hlspn(r: &mut Registers, m: &mut Memory)
+{
+    let b = m.read_byte(r.adv()) as i8 as i16 as u16;
+    let res = b + r.sp;
+    r.h = (res >> 8) as u8;
+    r.l = res as u8;
+    let tmp = b ^ r.sp ^ r.hl();
+    r.f = if tmp & 0x100 != 0 { C } else { 0 } | if tmp & 0x010 != 0 { H } else { 0 };
+}
+
+fn ld_ioan(r: &mut Registers, m: &mut Memory)
+{
+    let n = m.read_byte(r.adv());
+    m.write_byte(0xFF00 | (n as u16), r.a);
+}
+
+fn add_spn(r: &mut Registers, m: &mut Memory)
+{
+    let b = m.read_byte(r.adv()) as i8 as i16 as u16;
+    let res = r.sp + b;
+    let tmp = b ^ res ^ r.sp;
+    r.f = if tmp & 0x100 != 0 { C } else { 0 } | if tmp & 0x010 != 0 { H } else { 0 };
+    r.sp = res;
+}
+
+fn add_hlsp(r: &mut Registers)
+{
+    let s = r.hl() as u32 + r.sp as u32;
+    r.f = if r.hl() as u32 & 0xFFF > s & 0xFFF { H } else { 0 } | 
+             if s > 0xFFFF { C } else { 0 } | 
+             (r.f & Z);
+    r.h = (s >> 8) as u8;
+    r.l = s as u8;
+}
+
+fn pop_af(r: &mut Registers, m: &mut Memory)
+{
+    r.f = m.read_byte(r.sp) & 0xF0;
+    r.a = m.read_byte(r.sp + 1);
+    r.sp += 2;
+}
+
+fn xx() -> u32 { 0 }

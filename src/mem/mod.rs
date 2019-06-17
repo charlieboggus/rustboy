@@ -50,7 +50,7 @@ pub struct Memory
     pub speed_switch: bool,
 
     /// Loaded Cartridge
-    cart: Cartridge,
+    //cart: Cartridge,
 
     /// Working RAM
     wram: Box< RAM >,
@@ -62,14 +62,17 @@ pub struct Memory
 impl Memory
 {
     /// Create and return a new instance of the GameBoy memory
-    pub fn new(cart: Cartridge) -> Self
+    pub fn new() -> Self
     {
         Memory {
             intf: 0,
             inte: 0,
+            
             speed: Speed::Normal,
             speed_switch: false,
-            cart: cart,
+
+            //cart: cart,
+
             wram: Box::new(RAM::new(WRAM_SIZE)),
             hram: Box::new(RAM::new(HRAM_SIZE)),
         }
