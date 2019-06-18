@@ -5,11 +5,7 @@ authors = ["Charlie Boggus <charlie.boggus@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-bitflags = "1.0.4"
-lazy_static = "1.3.0"
-rand = "0.6.5"
-sdl2 = "0.32.2"
-time ="0.1.42"
+glium = "0.25.0"
 
 [lib]
 name = "rustboy"

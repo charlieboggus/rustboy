@@ -1,6 +1,8 @@
 use crate::cpu::CPU;
 use crate::mem::Memory;
 use crate::keypad::Button;
+use crate::mem::cartridge::Cartridge;
+use std::path::Path;
 
 /// The width of the GameBoy screen in pixels
 pub const DISPLAY_WIDTH: usize = 160;
@@ -14,6 +16,17 @@ pub enum Target
     GameBoy,
     GameBoyColor,
     SuperGameBoy
+}
+
+impl Target
+{
+    pub fn from_rom(rom: &[u8]) -> Option< Self >
+    {
+        if rom.len() < 0x0146       { return None; }
+        if rom[0x0143] & 0x80 != 0  { return Some(Target::GameBoyColor); }
+        if rom[0x0143] & 0x03 != 0  { return Some(Target::SuperGameBoy); }
+        None
+    }
 }
 
 pub struct Gameboy
@@ -34,11 +47,21 @@ pub struct Gameboy
 impl Gameboy
 {
     /// Create and return a new instance of a GameBoy running as the target system
-    pub fn new(target: Target) -> Self
+    pub fn new(rom_path: &Path) -> Self
     {
+        // Load the cartridge from ROM file
+        let cart = match Cartridge::from_file(rom_path) {
+            Ok(c) => c,
+            Err(e) => panic!("Failed to load ROM: {}", e)
+        };
+
+        // Determine target system from ROM
+        // TODO: remove this
+        let target = Target::GameBoy;
+
         Gameboy { 
             cpu: CPU::new(target),
-            mem: Memory::new(target),
+            mem: Memory::new(target, cart),
             fps: 0, 
             cycles: 0 
         }
@@ -79,11 +102,6 @@ impl Gameboy
         self.mem.write_byte(0xFF4A, 0x00);  // WY
         self.mem.write_byte(0xFF4B, 0x00);  // WX
         self.mem.write_byte(0xFFFF, 0x00);  // IE
-    }
-
-    /// Load a GameBoy ROM
-    pub fn load(&mut self)
-    {
     }
 
     /// Run a single cycle of the GameBoy

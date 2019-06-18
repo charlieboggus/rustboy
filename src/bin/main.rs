@@ -1,60 +1,62 @@
 extern crate rustboy;
-extern crate sdl2;
+#[macro_use]
+extern crate glium;
 
-mod audio;
-mod display;
-mod input;
-
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+use glium::{ glutin, Surface };
+use rustboy::gb::*;
 use std::thread;
 
-fn main() -> Result< (), String >
+const PIXEL_SCALE: usize = 3;
+
+fn main()
 {
-    let sdl_context = sdl2::init()?;
-    let video_subsys = sdl_context.video()?;
+    let ratio = 1 + (DISPLAY_WIDTH / 10);
+    let width = DISPLAY_WIDTH + 10 * ratio;
+    let height = DISPLAY_HEIGHT + 9 * ratio;
 
-    let window = video_subsys
-        .window("Rustboy - GameBoy Emulator", 100 as u32, 100 as u32)
-        .opengl()
-        .position_centered()
-        .build()
-        .map_err(|e| e.to_string())?;
-    
-    let mut canvas = window
-        .into_canvas()
-        .accelerated()
-        .build()
-        .map_err(|e| e.to_string())?;
-    canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
-    canvas.clear();
-    canvas.present();
+    // Create event loop
+    let mut event_loop = glutin::EventsLoop::new();
 
-    let mut event_pump = sdl_context.event_pump().map_err(|e| e.to_string())?;
+    // Create window builder
+    let wb = glium::glutin::WindowBuilder::new()
+        .with_dimensions(glutin::dpi::LogicalSize::new(width as f64, height as f64))
+        .with_resizable(false)
+        .with_title("Rustboy - GameBoy Emulator");
 
-    'running: loop
+    // Create context builder. We're using the latest version of OpenGL Core
+    let cb = glium::glutin::ContextBuilder::new()
+        .with_gl(glutin::GlRequest::Latest)
+        .with_gl_profile(glutin::GlProfile::Core)
+        .with_vsync(true);
+
+    // Create the display
+    let display = glium::Display::new(wb, cb, &event_loop).unwrap();
+
+    // Primary application loop
+    let mut closed = false;
+    while !closed
     {
-        // Handle Events
-        for event in event_pump.poll_iter()
+        // Event loop
+        event_loop.poll_events(|e| 
         {
-            match event
+            match e
             {
-                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                glutin::Event::WindowEvent { event, .. } => 
+                {
+                    match event 
+                    {
+                        glutin::WindowEvent::CloseRequested => closed = true,
+                        _ => ()
+                    }
+                },
 
-                _ => { continue; }
+                _ => ()
             }
-        }
+        });
 
-        // Render
-        canvas.clear();
-        
-        canvas.present();
-
-        // Sleep main thread to avoid overloading CPU
-        thread::sleep(::std::time::Duration::from_millis(1));
+        // Draw
+        let mut target = display.draw();
+        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        target.finish().unwrap();
     }
-
-    Ok(())
 }

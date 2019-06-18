@@ -28,6 +28,7 @@ use crate::gpu::GPU;
 use crate::timer::Timer;
 use crate::keypad::Keypad;
 
+/// GB has 8K of WRAM, CGB has 32K of WRAM
 const WRAM_SIZE: usize = 32 << 10;
 
 /// HRAM is from 0xFF80 to 0xFFFE
@@ -64,11 +65,14 @@ pub struct Memory
     /// High Speed RAM (Zeropage)
     hram: Box< RAM >,
 
+    /// The current WRAM bank currently swapped in
+    wram_bank: u8,
+
     /// GameBoy Timer
     timer: Box< Timer >,
 
     /// Gameboy GPU
-    gpu: Box< GPU >,
+    pub gpu: Box< GPU >,
 
     /// GameBoy Keypad
     pub keypad: Box< Keypad >,
@@ -77,30 +81,22 @@ pub struct Memory
 impl Memory
 {
     /// Create and return a new instance of the GameBoy memory
-    pub fn new(target: gb::Target) -> Self
+    pub fn new(target: gb::Target, cart: Cartridge) -> Self
     {
         Memory {
             target: target,
-
             intf: 0,
             inte: 0,
-
             speed: Speed::Normal,
             speed_switch: false,
-
-            cart: Cartridge::new(),
+            cart: cart,
             wram: Box::new(RAM::new(WRAM_SIZE)),
             hram: Box::new(RAM::new(HRAM_SIZE)),
-
+            wram_bank: 1,
             timer: Box::new(Timer::new()),
             gpu: Box::new(GPU::new(target)),
             keypad: Box::new(Keypad::new()),
         }
-    }
-
-    /// Loads raw ROM data as a cartridge into memory
-    pub fn load_cartridge(&mut self, rom_data: Vec< u8 >)
-    {
     }
 
     /// Step the Timer and GPU a given number of ticks forward
@@ -115,8 +111,11 @@ impl Memory
     {
         match addr
         {
-            // ROM
-            0x0000...0x7FFF => 0xFF,
+            // ROM Bank 0
+            0x0000...0x3FFF => 0xFF,
+
+            // ROM Bank 1
+            0x4000...0x7FFF => 0xFF,
 
             // VRAM
             0x8000...0x9FFF => self.gpu.read_byte(addr),
@@ -273,14 +272,5 @@ impl Memory
             Speed::Normal => Speed::Double, 
             Speed::Double => Speed::Normal 
         };
-    }
-
-    /// Select an appropriate target system based on data loaded from the ROM
-    pub fn select_target(rom: &[u8]) -> Option< gb::Target >
-    {
-        if rom.len() < 0x0146       { return None; }
-        if rom[0x0143] & 0x80 != 0  { return Some(gb::Target::GameBoyColor); }
-        if rom[0x0146] & 0x03 != 0  { return Some(gb::Target::SuperGameBoy); }
-        None
     }
 }
