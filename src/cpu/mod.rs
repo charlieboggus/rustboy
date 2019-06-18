@@ -1,6 +1,7 @@
 mod registers;
 mod instructions;
 
+use crate::gb::Target;
 use crate::mem::{ Memory, Speed };
 use registers::Registers;
 
@@ -22,7 +23,7 @@ pub struct CPU
 impl CPU
 {
     /// Create and return a new instance of the Gameboy CPU
-    pub fn new() -> Self
+    pub fn new(target: Target) -> Self
     {
         CPU {
             regs: Registers::new(),

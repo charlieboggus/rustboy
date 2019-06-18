@@ -16,8 +16,25 @@ pub struct Cartridge
 
     /// Current ROM bank mapped at 0x4000...0x7FFF
     rom_bank: u8,
+
+    /// True if RAM if write protected
+    ram_wp: bool,
+
+    /// Does this cartridge use a battery?
+    battery: bool,
 }
 
 impl Cartridge
 {
+    pub fn new() -> Self
+    {
+        Cartridge {
+            rom: Box::new(RAM::new(100)),
+            ram: Box::new(RAM::new(100)),
+            rom_banks: 0,
+            rom_bank: 0,
+            ram_wp: false,
+            battery: true
+        }
+    }
 }

@@ -44,6 +44,7 @@ impl Timer
         }
     }
 
+    /// Step the timer a given number of ticks forward
     pub fn step(&mut self, ticks: u32, intf: &mut u8, speed: Speed)
     {
         let ticks = match speed
@@ -77,9 +78,9 @@ impl Timer
         }
     }
 
-    pub fn update(&mut self)
+    fn update(&mut self)
     {
-        match self.tac &  0x3
+        match self.tac & 0x3
         {
             0x0 => self.speed = 256,
             0x1 => self.speed = 4,
@@ -91,10 +92,26 @@ impl Timer
 
     pub fn read_byte(&self, addr: u16) -> u8
     {
-        0
+        match addr
+        {
+            0xFF04 => self.div,
+            0xFF05 => self.tima,
+            0xFF06 => self.tma,
+            0xFF07 => self.tac,
+
+            _ => 0xFF
+        }
     }
 
-    pub fn write_byte(&mut self, addr: u16, val: u16)
+    pub fn write_byte(&mut self, addr: u16, val: u8)
     {
+        match addr
+        {
+            0xFF04 => self.div = 0,
+            0xFF05 => self.tima = val,
+            0xFF06 => self.tma = val,
+            0xFF07 => { self.tac = val; self.update(); },
+            _ => {}
+        }
     }
 }

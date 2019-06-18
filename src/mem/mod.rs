@@ -20,10 +20,12 @@
 pub mod ram;
 pub mod cartridge;
 
-use crate::gb;
-
 use ram::RAM;
 use cartridge::Cartridge;
+
+use crate::gb;
+use crate::gpu::GPU;
+use crate::timer::Timer;
 
 const WRAM_SIZE: usize = 32 << 10;
 
@@ -39,6 +41,9 @@ pub enum Speed
 
 pub struct Memory
 {
+    /// Target system this memory is for
+    target: gb::Target,
+
     /// Interrupt flags, the master IEM register is on CPU
     pub intf: u8,
     pub inte: u8,
@@ -50,32 +55,49 @@ pub struct Memory
     pub speed_switch: bool,
 
     /// Loaded Cartridge
-    //cart: Cartridge,
+    cart: Cartridge,
 
     /// Working RAM
     wram: Box< RAM >,
 
     /// High Speed RAM (Zeropage)
     hram: Box< RAM >,
+
+    /// GameBoy Timer
+    timer: Box< Timer >,
+
+    /// Gameboy GPU
+    gpu: Box< GPU >
 }
 
 impl Memory
 {
     /// Create and return a new instance of the GameBoy memory
-    pub fn new() -> Self
+    pub fn new(target: gb::Target) -> Self
     {
         Memory {
+            target: target,
+
             intf: 0,
             inte: 0,
-            
+
             speed: Speed::Normal,
             speed_switch: false,
 
-            //cart: cart,
-
+            cart: Cartridge::new(),
             wram: Box::new(RAM::new(WRAM_SIZE)),
             hram: Box::new(RAM::new(HRAM_SIZE)),
+
+            timer: Box::new(Timer::new()),
+            gpu: Box::new(GPU::new(target))
         }
+    }
+
+    /// Step the Timer and GPU a given number of ticks forward
+    pub fn step(&mut self, time: u32)
+    {
+        self.timer.step(time, &mut self.intf, self.speed);
+        self.gpu.step(time, &mut self.intf);
     }
 
     /// Read a byte from the given address in memory
@@ -87,7 +109,7 @@ impl Memory
             0x0000...0x7FFF => 0xFF,
 
             // VRAM
-            0x8000...0x9FFF => 0xFF,
+            0x8000...0x9FFF => self.gpu.read_byte(addr),
 
             // EXT RAM
             0xA000...0xBFFF => 0xFF,
@@ -102,7 +124,7 @@ impl Memory
             0xE000...0xFDFF => 0xFF,
 
             // OAM
-            0xFE00...0xFE9F => 0xFF,
+            0xFE00...0xFE9F => self.gpu.read_byte(addr),
 
             // Unused
             0xFEA0...0xFEFF => 0xFF,
@@ -127,7 +149,7 @@ impl Memory
             0x0000...0x7FFF => { },
 
             // VRAM
-            0x8000...0x9FFF => { },
+            0x8000...0x9FFF => self.gpu.write_byte(addr, val),
 
             // EXT RAM
             0xA000...0xBFFF => { },
@@ -142,7 +164,7 @@ impl Memory
             0xE000...0xFDFF => { },
 
             // OAM
-            0xFE00...0xFE9F => { },
+            0xFE00...0xFE9F => self.gpu.write_byte(addr, val),
 
             // Unused
             0xFEA0...0xFEFF => { },
@@ -171,15 +193,22 @@ impl Memory
         self.write_byte(addr + 1, (val >> 8) as u8);
     }
 
-    /// Read a byte from an IO Register address in memory (0xFF00 thru 0xFF7F)
+    /// Read a byte from an IO Register address (0xFF00 thru 0xFF7F)
     fn read_io_reg_byte(&self, addr: u16) -> u8
     {
-        0
+        match addr
+        {
+            _ => 0
+        }
     }
 
-    /// Write a byte to an IO register address in memory (0xFF00 thru 0xFF7F)
+    /// Write a byte to an IO register address (0xFF00 thru 0xFF7F)
     fn write_io_reg_byte(&mut self, addr: u16, val: u8)
     {
+        match addr
+        {
+            _ => {  }
+        }
     }
 
     /// Switches speed if a speed switch is requested by CPU
