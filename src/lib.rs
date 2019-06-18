@@ -6,3 +6,4 @@ mod cpu;
 mod mem;
 mod gpu;
 mod timer;
+mod keypad;

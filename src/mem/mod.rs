@@ -26,6 +26,7 @@ use cartridge::Cartridge;
 use crate::gb;
 use crate::gpu::GPU;
 use crate::timer::Timer;
+use crate::keypad::Keypad;
 
 const WRAM_SIZE: usize = 32 << 10;
 
@@ -67,7 +68,10 @@ pub struct Memory
     timer: Box< Timer >,
 
     /// Gameboy GPU
-    gpu: Box< GPU >
+    gpu: Box< GPU >,
+
+    /// GameBoy Keypad
+    pub keypad: Box< Keypad >,
 }
 
 impl Memory
@@ -89,8 +93,14 @@ impl Memory
             hram: Box::new(RAM::new(HRAM_SIZE)),
 
             timer: Box::new(Timer::new()),
-            gpu: Box::new(GPU::new(target))
+            gpu: Box::new(GPU::new(target)),
+            keypad: Box::new(Keypad::new()),
         }
+    }
+
+    /// Loads raw ROM data as a cartridge into memory
+    pub fn load_cartridge(&mut self, rom_data: Vec< u8 >)
+    {
     }
 
     /// Step the Timer and GPU a given number of ticks forward
@@ -198,7 +208,24 @@ impl Memory
     {
         match addr
         {
-            _ => 0
+            // Keypad
+            0xFF00 => self.keypad.read_byte(addr),
+
+            // Serial
+
+            // Timer
+            0xFF04...0xFF07 => self.timer.read_byte(addr),
+
+            // Interrupt Flag
+            0xFF0F => self.intf,
+
+            // Sound
+            0xFF10...0xFF3F => 0xFF,
+
+            // GPU
+            0xFF40...0xFF4F => self.gpu.read_byte(addr),
+
+            _ => 0xFF
         }
     }
 
@@ -207,7 +234,33 @@ impl Memory
     {
         match addr
         {
-            _ => {  }
+            // Keypad
+            0xFF00 => self.keypad.write_byte(addr, val),
+            
+            // Serial
+            // TODO
+
+            // Timer
+            0xFF04...0xFF07 => self.timer.write_byte(addr, val),
+
+            // Interrupt flag
+            0xFF0F => self.intf = val,
+
+            // Sound
+            // TODO
+
+            // GPU
+            0xFF40...0xFF4F => self.gpu.write_byte(addr, val),
+
+            // TODO:
+            // 0xFF50+ gpu stuff
+            // 0xFF60+ gpu stuff
+
+            // WRAM bank for CGB mode
+            // TODO
+            0xFF70 => { }
+
+            _ => {}
         }
     }
 
@@ -222,6 +275,7 @@ impl Memory
         };
     }
 
+    /// Select an appropriate target system based on data loaded from the ROM
     pub fn select_target(rom: &[u8]) -> Option< gb::Target >
     {
         if rom.len() < 0x0146       { return None; }
