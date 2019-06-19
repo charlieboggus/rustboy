@@ -1,18 +1,5 @@
 use crate::cpu::Interrupts;
-
-/// GameBoy buttons
-#[derive(Debug, Clone, Copy)]
-pub enum Button
-{
-    Left, 
-    Right, 
-    Up, 
-    Down,
-    A, 
-    B, 
-    Start, 
-    Select
-}
+use crate::gb::Button;
 
 /// The type of button that was pressed
 pub enum Selected

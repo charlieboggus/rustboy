@@ -1,6 +1,5 @@
 use crate::cpu::CPU;
 use crate::mem::Memory;
-use crate::keypad::Button;
 use crate::mem::cartridge::Cartridge;
 use std::path::Path;
 
@@ -17,6 +16,20 @@ pub enum Target
     GameBoy,
     GameBoyColor,
     SuperGameBoy
+}
+
+/// GameBoy buttons
+#[derive(Debug, Clone, Copy)]
+pub enum Button
+{
+    Left, 
+    Right, 
+    Up, 
+    Down,
+    A, 
+    B, 
+    Start, 
+    Select
 }
 
 pub struct Gameboy
@@ -111,9 +124,10 @@ impl Gameboy
         }
     }
 
-    /// Get the color of the pixel at the given x, y location
-    pub fn get_pixel_color(&mut self, x: usize, y: usize)
+    /// Get the image data currently being drawn by GPU
+    pub fn get_image_data(&self) -> &[u8]
     {
+        &*self.mem.gpu.image_data
     }
 
     /// Register that a key has been pressed down

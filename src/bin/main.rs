@@ -11,6 +11,7 @@ fn main()
     // Create the GB
     let mut gb = Gameboy::new(Path::new(""));
 
+    // Display scaling stuff
     let ratio = 1 + (DISPLAY_WIDTH / 10);
     let width = DISPLAY_WIDTH + 10 * ratio;
     let height = DISPLAY_HEIGHT + 9 * ratio;
@@ -49,7 +50,32 @@ fn main()
                 {
                     match event 
                     {
+                        // Window close event
                         glutin::WindowEvent::CloseRequested => closed = true,
+
+                        // Keyboard input event
+                        glutin::WindowEvent::KeyboardInput { input, .. } => 
+                        {
+                            if let Some(glutin::VirtualKeyCode::Z) = input.virtual_keycode
+                            {
+                                match input.state
+                                {
+                                    glutin::ElementState::Pressed => gb.key_down(Button::A),
+                                    glutin::ElementState::Released => gb.key_up(Button::A)
+                                }
+                            }
+
+                            if let Some(glutin::VirtualKeyCode::X) = input.virtual_keycode
+                            {
+                                match input.state
+                                {
+                                    glutin::ElementState::Pressed => gb.key_down(Button::B),
+                                    glutin::ElementState::Released => gb.key_up(Button::B)
+                                }
+                            }
+
+                            // TODO: rest of the controls
+                        },
                         _ => ()
                     }
                 },
@@ -61,6 +87,7 @@ fn main()
         // Draw
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
+        // TODO: draw here
         target.finish().unwrap();
     }
 }
