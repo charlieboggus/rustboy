@@ -1,5 +1,6 @@
 use crate::cpu::Interrupts;
 
+/// GameBoy buttons
 #[derive(Debug, Clone, Copy)]
 pub enum Button
 {
@@ -13,6 +14,7 @@ pub enum Button
     Select
 }
 
+/// The type of button that was pressed
 pub enum Selected
 {
     Button = 0x20,
@@ -30,6 +32,7 @@ pub struct Keypad
 
 impl Keypad
 {
+    /// Create and return a new instance of the GB keypad
     pub fn new() -> Self
     {
         Keypad {
@@ -40,6 +43,7 @@ impl Keypad
         }
     }
 
+    /// Read the GB keypad register
     pub fn read_byte(&self, _addr: u16) -> u8
     {
         match self.col
@@ -50,6 +54,7 @@ impl Keypad
         }
     }
 
+    /// Write to the GB keypad register
     pub fn write_byte(&mut self, _addr: u16, val: u8)
     {
         match !val & 0x30
@@ -62,6 +67,7 @@ impl Keypad
         }
     }
 
+    /// Called whenever a button is pressed
     pub fn key_down(&mut self, key: Button, intf: &mut u8)
     {
         *intf |= Interrupts::Joypad as u8;
@@ -78,6 +84,7 @@ impl Keypad
         }
     }
 
+    /// Called whenever a button is released
     pub fn key_up(&mut self, key: Button)
     {
         match key

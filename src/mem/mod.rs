@@ -111,26 +111,20 @@ impl Memory
     {
         match addr
         {
-            // ROM Bank 0
-            0x0000...0x3FFF => 0xFF,
-
-            // ROM Bank 1
-            0x4000...0x7FFF => 0xFF,
+            // ROM Banks
+            0x0000...0x7FFF => self.cart.read_rom(addr),
 
             // VRAM
             0x8000...0x9FFF => self.gpu.read_byte(addr),
 
             // EXT RAM
-            0xA000...0xBFFF => 0xFF,
+            0xA000...0xBFFF => self.cart.read_ram(addr),
 
-            // WRAM 0
-            0xC000...0xCFFF => 0xFF,
+            // WRAM 0 and WRAM 0 mirror
+            0xC000...0xCFFF | 0xE000...0xEFFF => self.wram.read_byte(addr & 0xFFF),
 
-            // WRAM 1
-            0xD000...0xDFFF => 0xFF,
-
-            // WRAM ECHO
-            0xE000...0xFDFF => 0xFF,
+            // WRAM 1 and WRAM 1 mirror
+            0xD000...0xDFFF | 0xF000...0xFDFF => self.wram.read_byte((self.wram_bank as u16) << 12 | (addr & 0xFFF)),
 
             // OAM
             0xFE00...0xFE9F => self.gpu.read_byte(addr),
@@ -139,71 +133,18 @@ impl Memory
             0xFEA0...0xFEFF => 0xFF,
 
             // IO Registers
-            0xFF00...0xFF7F => self.read_io_reg_byte(addr),
+            0xFF00...0xFF7F => self.read_byte_io(addr),
 
             // HRAM
-            0xFF80...0xFFFE => 0xFF,
+            0xFF80...0xFFFE => self.hram.read_byte(addr & 0x7F),
 
             // IE Register
             0xFFFF => self.inte
         }
     }
 
-    /// Write a byte to the given address in memory
-    pub fn write_byte(&mut self, addr: u16, val: u8)
-    {
-        match addr
-        {
-            // ROM
-            0x0000...0x7FFF => { },
-
-            // VRAM
-            0x8000...0x9FFF => self.gpu.write_byte(addr, val),
-
-            // EXT RAM
-            0xA000...0xBFFF => { },
-
-            // WRAM 0
-            0xC000...0xCFFF => { },
-
-            // WRAM 1
-            0xD000...0xDFFF => { },
-
-            // WRAM ECHO
-            0xE000...0xFDFF => { },
-
-            // OAM
-            0xFE00...0xFE9F => self.gpu.write_byte(addr, val),
-
-            // Unused
-            0xFEA0...0xFEFF => { },
-
-            // IO Registers
-            0xFF00...0xFF7F => self.write_io_reg_byte(addr, val),
-
-            // HRAM
-            0xFF80...0xFFFE => { },
-
-            // IE Register
-            0xFFFF => self.inte = val
-        }
-    }
-
-    /// Read a 16-bit word from the given address in memory
-    pub fn read_word(&self, addr: u16) -> u16
-    {
-        (self.read_byte(addr) as u16) | ((self.read_byte(addr + 1) as u16) << 8)
-    }
-
-    /// Write a 16-bit word to the given address in memory
-    pub fn write_word(&mut self, addr: u16, val: u16)
-    {
-        self.write_byte(addr, val as u8);
-        self.write_byte(addr + 1, (val >> 8) as u8);
-    }
-
     /// Read a byte from an IO Register address (0xFF00 thru 0xFF7F)
-    fn read_io_reg_byte(&self, addr: u16) -> u8
+    fn read_byte_io(&self, addr: u16) -> u8
     {
         match addr
         {
@@ -228,8 +169,45 @@ impl Memory
         }
     }
 
+    /// Write a byte to the given address in memory
+    pub fn write_byte(&mut self, addr: u16, val: u8)
+    {
+        match addr
+        {
+            // ROM
+            0x0000...0x7FFF => self.cart.write_rom(addr, val),
+
+            // VRAM
+            0x8000...0x9FFF => self.gpu.write_byte(addr, val),
+
+            // EXT RAM
+            0xA000...0xBFFF => self.cart.write_ram(addr, val),
+
+            // WRAM 0 and WRAM 0 mirror
+            0xC000...0xCFFF | 0xE000...0xEFFF => self.wram.write_byte(addr & 0xFFF, val),
+
+            // WRAM 1 and WRAM 1 mirror
+            0xD000...0xDFFF | 0xF000...0xFDFF => self.wram.write_byte((self.wram_bank as u16) << 12 | (addr & 0xFFF), val),
+
+            // OAM
+            0xFE00...0xFE9F => self.gpu.write_byte(addr, val),
+
+            // Unused
+            0xFEA0...0xFEFF => { },
+
+            // IO Registers
+            0xFF00...0xFF7F => self.write_byte_io(addr, val),
+
+            // HRAM
+            0xFF80...0xFFFE => self.hram.write_byte(addr & 0x7F, val),
+
+            // IE Register
+            0xFFFF => self.inte = val
+        }
+    }
+
     /// Write a byte to an IO register address (0xFF00 thru 0xFF7F)
-    fn write_io_reg_byte(&mut self, addr: u16, val: u8)
+    fn write_byte_io(&mut self, addr: u16, val: u8)
     {
         match addr
         {
@@ -261,6 +239,19 @@ impl Memory
 
             _ => {}
         }
+    }
+
+    /// Read a 16-bit word from the given address in memory
+    pub fn read_word(&self, addr: u16) -> u16
+    {
+        (self.read_byte(addr) as u16) | ((self.read_byte(addr + 1) as u16) << 8)
+    }
+
+    /// Write a 16-bit word to the given address in memory
+    pub fn write_word(&mut self, addr: u16, val: u16)
+    {
+        self.write_byte(addr, val as u8);
+        self.write_byte(addr + 1, (val >> 8) as u8);
     }
 
     /// Switches speed if a speed switch is requested by CPU

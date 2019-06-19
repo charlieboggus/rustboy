@@ -10,23 +10,13 @@ pub const DISPLAY_WIDTH: usize = 160;
 /// The height of the GameBoy screen in pixels
 pub const DISPLAY_HEIGHT: usize = 144;
 
+/// The target GameBoy system that is running
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Target
 {
     GameBoy,
     GameBoyColor,
     SuperGameBoy
-}
-
-impl Target
-{
-    pub fn from_rom(rom: &[u8]) -> Option< Self >
-    {
-        if rom.len() < 0x0146       { return None; }
-        if rom[0x0143] & 0x80 != 0  { return Some(Target::GameBoyColor); }
-        if rom[0x0143] & 0x03 != 0  { return Some(Target::SuperGameBoy); }
-        None
-    }
 }
 
 pub struct Gameboy
@@ -41,7 +31,10 @@ pub struct Gameboy
     fps: u32,
 
     /// Timing
-    cycles: u32
+    cycles: u32,
+
+    /// Name of the currently loaded cartridge
+    pub title: String
 }
 
 impl Gameboy
@@ -55,15 +48,16 @@ impl Gameboy
             Err(e) => panic!("Failed to load ROM: {}", e)
         };
 
-        // Determine target system from ROM
-        // TODO: remove this
-        let target = Target::GameBoy;
+        // Determine target system from the loaded cartridge
+        let target = cart.get_target();
+        let title = cart.get_title();
 
         Gameboy { 
             cpu: CPU::new(target),
             mem: Memory::new(target, cart),
             fps: 0, 
-            cycles: 0 
+            cycles: 0,
+            title: title
         }
     }
 
@@ -71,6 +65,7 @@ impl Gameboy
     pub fn power_on(&mut self)
     {
         // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf - page 18
+        
         self.mem.write_byte(0xFF05, 0x00);  // TIMA
         self.mem.write_byte(0xFF06, 0x00);  // TMA
         self.mem.write_byte(0xFF07, 0x00);  // TAC
