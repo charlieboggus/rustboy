@@ -17,37 +17,35 @@ pub enum Interrupts
 pub struct CPU
 {
     pub regs: Registers,
-    ticks: u32,
 }
 
 impl CPU
 {
     /// Create and return a new instance of the Gameboy CPU
-    pub fn new(target: Target) -> Self
+    pub fn new(_target: Target) -> Self
     {
-        CPU {
-            regs: Registers::new(),
-            ticks: 0
-        }
+        CPU { regs: Registers::new() }
     }
 
     pub fn exec(&mut self, mem: &mut Memory) -> u32
     {
         self.regs.interrupt_step();
 
-        // Execute next instruction
-        let mut ticks = if self.regs.halt == 0 && self.regs.stop == 0
+        // Execute next instruction & get the number of ticks it took
+        let mut ticks = if self.regs.halt == 0 && self.regs.stop == 0 
         {
-            let opcode = mem.read_byte(self.regs.adv());
-            instructions::exec(opcode, self, mem)
-        }
-        else
+            let pc = self.regs.adv();
+            let opcode = mem.read_byte(pc);
+            instructions::exec(opcode, &mut self.regs, mem)
+        } 
+        else 
         {
             if self.regs.stop != 0 && mem.speed_switch
             {
                 mem.switch_speed();
                 self.regs.stop = 0;
             }
+
             1
         };
 
@@ -66,7 +64,7 @@ impl CPU
                 self.regs.ime = 0;
                 self.regs.halt = 0;
                 self.regs.stop = 0;
-
+                
                 match i
                 {
                     0 => { self.regs.rst(0x40, mem); },
@@ -87,7 +85,7 @@ impl CPU
             Speed::Normal => { ticks *= 4; },
             Speed::Double => { ticks *= 2; }
         }
-        self.ticks += ticks;
+        
         ticks
     }
 }

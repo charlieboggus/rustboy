@@ -1,7 +1,10 @@
 use crate::cpu::CPU;
 use crate::mem::Memory;
-use crate::mem::cartridge::Cartridge;
+use std::fs::File;
+use std::io::Read;
+use std::io::Result as IoResult;
 use std::path::Path;
+
 
 /// The width of the GameBoy screen in pixels
 pub const DISPLAY_WIDTH: usize = 160;
@@ -46,8 +49,8 @@ pub struct Gameboy
     /// Timing
     cycles: u32,
 
-    /// Name of the currently loaded cartridge
-    pub title: String
+    /// Target system
+    target: Target
 }
 
 impl Gameboy
@@ -55,27 +58,39 @@ impl Gameboy
     /// Create and return a new instance of a GameBoy running as the target system
     pub fn new(rom_path: &Path) -> Self
     {
-        // Load the cartridge from ROM file
-        let cart = match Cartridge::from_file(rom_path) {
-            Ok(c) => c,
-            Err(e) => panic!("Failed to load ROM: {}", e)
+        // Load the ROM file
+        let rom = match Gameboy::load_rom(rom_path) {
+            Ok(r) => r,
+            Err(e) => panic!("Unable to load ROM file: {}", e)
         };
+        
+        // Determine the target system
+        let target = Target::GameBoy;
 
-        // Determine target system from the loaded cartridge
-        let target = cart.get_target();
-        let title = cart.get_title();
-
-        Gameboy { 
+        let mut gb = Gameboy { 
             cpu: CPU::new(target),
-            mem: Memory::new(target, cart),
+            mem: Memory::new(target),
             fps: 0, 
             cycles: 0,
-            title: title
-        }
+            target: target
+        };
+        gb.power_on();
+        gb.mem.load_cartridge(rom);
+
+        gb
+    }
+
+    /// Load the ROM from file into a Vec< u8 >
+    fn load_rom(rom_path: &Path) -> IoResult< Vec< u8 > >
+    {
+        let mut src = File::open(rom_path)?;
+        let mut rom = Vec::new();
+        (&mut src).read_to_end(&mut rom)?;
+        Ok(rom)
     }
 
     /// Execute the GameBoy power up sequence
-    pub fn power_on(&mut self)
+    fn power_on(&mut self)
     {
         // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf - page 18
         
@@ -110,18 +125,27 @@ impl Gameboy
         self.mem.write_byte(0xFF4A, 0x00);  // WY
         self.mem.write_byte(0xFF4B, 0x00);  // WX
         self.mem.write_byte(0xFFFF, 0x00);  // IE
+
+        match self.target
+        {
+            Target::GameBoyColor => { 
+                self.mem.write_byte(0xFF68, 0xC0);
+                self.mem.write_byte(0xFF6A, 0xC0);
+            }
+            _ => {}
+        }
     }
 
     /// Run a single cycle of the GameBoy
     pub fn run(&mut self)
     {
-        self.cycles += 70224;
-        while self.cycles <= 70224
+        while self.cycles < 0x10000
         {
             let time = self.cpu.exec(&mut self.mem);
             self.mem.step(time);
-            self.cycles -= time;
+            self.cycles += time;
         }
+        self.cycles -= 0x10000;
     }
 
     /// Get the image data currently being drawn by GPU

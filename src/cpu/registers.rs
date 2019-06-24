@@ -1,5 +1,4 @@
 use crate::mem::Memory;
-use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Registers
@@ -64,7 +63,7 @@ impl Registers
             h: 0x01,
             l: 0x4D,
             sp: 0xFFFE,
-            pc: 0x0100,
+            pc: 0x100,
             ime: 0,
             halt: 0,
             stop: 0,
@@ -76,7 +75,7 @@ impl Registers
     pub fn adv(&mut self) -> u16
     {
         let pc = self.pc;
-        self.pc += 1;
+        self.pc = self.pc.overflowing_add(1).0;    
         pc
     }
 
@@ -90,36 +89,41 @@ impl Registers
     pub fn hl(&self) -> u16 { ((self.h as u16) << 8) |(self.l as u16) }
 
     /// Decrement HL
-    pub fn hlmm(&mut self)
+    pub fn dec_hl(&mut self)
     {
-        self.l -= 1;
+        let val = self.l.overflowing_sub(1);
+        self.l = val.0;
         if self.l == 0xFF
         {
-            self.h -= 1;
+            let val = self.h.overflowing_sub(1);
+            self.h = val.0;
         }
     }
 
     /// Increment HL
-    pub fn hlpp(&mut self)
+    pub fn inc_hl(&mut self)
     {
-        self.l += 1;
-        if self.l == 0
+        let val = self.l.overflowing_add(1);
+        self.l = val.0;
+        if self.l == 0x0
         {
-            self.h += 1;
+            let val = self.h.overflowing_add(1);
+            self.h = val.0;
         }
     }
 
     /// Return from the current subroutine
-    pub fn ret(&mut self, m: &mut Memory)
+    pub fn ret(&mut self, mem: &mut Memory)
     {
-        self.pc = m.read_word(self.sp);
-        self.sp += 2;
+        self.pc = mem.read_word(self.sp);
+        self.sp = self.sp.overflowing_add(2).0;
     }
 
-    pub fn rst(&mut self, i: u16, m: &mut Memory)
+    /// Reset PC to given address, i
+    pub fn rst(&mut self, i: u16, mem: &mut Memory)
     {
-        self.sp -= 2;
-        m.write_word(self.sp, self.pc);
+        self.sp = self.sp.overflowing_sub(2).0;
+        mem.write_word(self.sp, self.pc);
         self.pc = i;
     }
 
@@ -136,7 +140,7 @@ impl Registers
         }
     }
 
-    /// Disable interrupts
+    /// Schedule Disabling of interrupts
     pub fn di(&mut self)
     {
         self.ime = 0;
@@ -152,17 +156,5 @@ impl Registers
             2 => { self.delay = 1; }
             _ => {}
         }
-    }
-}
-
-impl fmt::Display for Registers
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
-    {
-        write!(f, "a: {:#X}, b: {:#X}, c: {:#X}, d: {:#X}, e: {:#X},
-                   h: {:#X}, l: {:#X}, sp: {:#X}, pc: {:#X}", 
-                   self.a, self.b, self.c, self.d, 
-                   self.e, self.h, self.l, self.sp, 
-                   self.pc)
     }
 }

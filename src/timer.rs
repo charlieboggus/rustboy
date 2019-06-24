@@ -52,28 +52,28 @@ impl Timer
             Speed::Normal => ticks / 4,
             Speed::Double => ticks
         };
-        self.clock.div += ticks;
+        self.clock.div = self.clock.div.overflowing_add(ticks).0;
 
         // Increment DIV as necessary
         while self.clock.div >= 64
         {
-            self.div += 1;
-            self.clock.div -= 64;
+            self.div = self.div.overflowing_add(1).0;
+            self.clock.div = self.clock.div.overflowing_sub(64).0;
         }
 
         // Increment TIMA as necessary
         if self.tac & 0x4 != 0
         {
-            self.clock.tima += ticks;
+            self.clock.tima = self.clock.tima.overflowing_add(ticks).0;
             while self.clock.tima >= self.speed
             {
-                self.tima += 1;
+                self.tima = self.tima.overflowing_add(1).0;
                 if self.tima == 0
                 {
                     self.tima = self.tma;
                     *intf |= Interrupts::Timer as u8;
                 }
-                self.clock.tima -= self.speed;
+                self.clock.tima = self.clock.tima.overflowing_sub(self.speed).0;
             }
         }
     }
