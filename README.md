@@ -5,7 +5,7 @@ This project was made for educational purposes in order to delve deeper into emu
 
 ## Screenshots:
 
-![Tetris](https://github.com/charlieboggus/rustboy/screenshots/tetris.png)
+![Tetris](https://github.com/charlieboggus/rustboy/blob/master/screenshots/tetris.png)
 
 ## Controls:
 
