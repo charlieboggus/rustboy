@@ -19,7 +19,7 @@
 
 pub mod ram;
 
-use crate::gb::{ self, Target };
+use crate::Target;
 use crate::gpu::GPU;
 use crate::timer::Timer;
 use crate::keypad::Keypad;
@@ -32,6 +32,7 @@ const WRAM_SIZE: usize = 32 << 10;
 /// HRAM is from 0xFF80 to 0xFFFE
 const HRAM_SIZE: usize = 0x7F;
 
+/// The speed at which the GameBoy is running
 #[derive(Debug, Clone, Copy)]
 pub enum Speed
 {
@@ -54,7 +55,7 @@ enum MBC
 pub struct Memory
 {
     /// Target system this memory is for
-    target: gb::Target,
+    target: Target,
 
     /// Interrupt flags, the master IEM register is on CPU
     pub intf: u8,
@@ -118,7 +119,7 @@ pub struct Memory
 impl Memory
 {
     /// Create and return a new instance of the GameBoy memory
-    pub fn new(target: gb::Target) -> Self
+    pub fn new(target: Target) -> Self
     {
         Memory {
             target: target,
@@ -303,6 +304,7 @@ impl Memory
             0xFF00 => self.keypad.read_byte(addr),
 
             // Serial
+            // TODO: serial interface registers
 
             // Timer
             0xFF04...0xFF07 => self.timer.read_byte(addr),
@@ -311,6 +313,7 @@ impl Memory
             0xFF0F => self.intf,
 
             // Sound
+            // TODO: sound controller registers
             0xFF10...0xFF3F => 0xFF,
 
             // GPU
@@ -334,7 +337,7 @@ impl Memory
 
             0xFF70 =>
             {
-                if self.target == gb::Target::GameBoyColor
+                if self.target == Target::GameBoyColor
                 {
                     self.wram_bank as u8
                 }
@@ -352,7 +355,6 @@ impl Memory
     pub fn write_byte(&mut self, addr: u16, val: u8)
     {
         use MBC::*;
-
         match addr
         {
             // ROM Banks
@@ -490,7 +492,7 @@ impl Memory
             0xFF00 => self.keypad.write_byte(addr, val),
             
             // Serial
-            // TODO
+            // TODO: serial interface registers
 
             // Timer
             0xFF04...0xFF07 => self.timer.write_byte(addr, val),
@@ -499,7 +501,7 @@ impl Memory
             0xFF0F => self.intf = val,
 
             // Sound
-            // TODO
+            // TODO: sound controller registers
 
             // GPU
             0xFF40...0xFF6F => 

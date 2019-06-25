@@ -1,5 +1,5 @@
 use crate::cpu::Interrupts;
-use crate::gb::Button;
+use crate::Button;
 
 /// The type of button that was pressed
 pub enum Selected
@@ -9,6 +9,7 @@ pub enum Selected
     MltReq = 0x00
 }
 
+/// Represents the GameBoy joypad
 pub struct Keypad
 {
     buttons: u8,

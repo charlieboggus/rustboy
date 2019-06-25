@@ -1,12 +1,15 @@
 extern crate rustboy;
 #[macro_use]
 extern crate glium;
+extern crate alto;
 
+use alto::*;
 use glium::{ glutin, Surface, VertexBuffer, index::{ IndexBuffer, PrimitiveType } };
-use rustboy::gb::*;
+use rustboy::*;
 use std::path::Path;
 use std::thread;
 use std::time::Duration;
+use std::sync::Arc;
 
 fn main()
 {
@@ -96,6 +99,17 @@ fn main()
             }
         " 
     }).unwrap();
+
+    // Initialize OpenAL with alto
+    let alto = if let Ok(alto) = Alto::load_default() { 
+        alto 
+    } else { 
+        panic!("Failed to initialize alto! No OpenAL implementation present!");
+    };
+    let dev = alto.open(None).unwrap();
+    let ctx = dev.new_context(None).unwrap();
+
+    // TODO: sound buffer and source stuff
 
     // Create GameBoy instance
     let mut gb = Gameboy::new(Path::new("ROMs/Tetris.gb"));

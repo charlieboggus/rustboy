@@ -1,4 +1,4 @@
-use crate::gb::Target;
+use crate::Target;
 use crate::cpu::Interrupts;
 use crate::mem::Memory;
 

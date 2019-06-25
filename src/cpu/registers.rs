@@ -1,5 +1,6 @@
 use crate::mem::Memory;
 
+/// Represents all of the GB CPU registers
 #[derive(Debug, Clone, Copy)]
 pub struct Registers
 {

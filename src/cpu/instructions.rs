@@ -83,7 +83,8 @@ pub fn exec(op: u8, regs: &mut Registers, mem: &mut Memory) -> u32
             let c = if regs.f & C != 0 { 1 } else { 0x0 };
             regs.a = a.overflowing_add(n.overflowing_add(c).0).0;
             regs.f = if (a & 0xF) + (n & 0xF) + c > 0xF { H } else { 0x0 };
-            regs.f |= if (a as u16 + n as u16 + c as u16) > 0xFF { C } else { 0x0 };
+            regs.f |= 
+                if (a as u16 + n as u16 + c as u16) > 0xFF { C } else { 0x0 };
             regs.f |= if regs.a == 0 { Z } else { 0x0 };
             1 
         });
@@ -95,7 +96,10 @@ pub fn exec(op: u8, regs: &mut Registers, mem: &mut Memory) -> u32
             let a = regs.a;
             let n = $n;
             regs.a = a.overflowing_sub(n).0;
-            regs.f = N | if a < n { C } else { 0x0 } | if (a & 0xF) < (n & 0xF) { H } else { 0x0 };
+            regs.f = 
+                N | 
+                if a < n { C } else { 0x0 } | 
+                if (a & 0xF) < (n & 0xF) { H } else { 0x0 };
             regs.f |= if regs.a == 0 { Z } else { 0x0 };
             1
         });

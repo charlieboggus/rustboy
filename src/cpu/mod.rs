@@ -1,10 +1,11 @@
 mod registers;
 mod instructions;
 
-use crate::gb::Target;
+use crate::Target;
 use crate::mem::{ Memory, Speed };
 use registers::Registers;
 
+/// The different types of GB interrupts
 pub enum Interrupts
 {
     VBlank  = 0x01,
@@ -14,6 +15,7 @@ pub enum Interrupts
     Joypad  = 0x10
 }
 
+/// Represents the GB CPU
 pub struct CPU
 {
     pub regs: Registers,
@@ -27,8 +29,10 @@ impl CPU
         CPU { regs: Registers::new() }
     }
 
+    /// Execute a CPU cycle
     pub fn exec(&mut self, mem: &mut Memory) -> u32
     {
+        // Step the interrupts forward
         self.regs.interrupt_step();
 
         // Execute next instruction & get the number of ticks it took
