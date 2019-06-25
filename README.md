@@ -20,7 +20,7 @@ This project was made for educational purposes in order to delve deeper into emu
 | `Left` | `D-Pad Left` |
 | `Right` | `D-Pad Right` |
 
-### License:
+## License:
 
 This project is released under the GNU General Public License v3.0. 
 See [LICENSE](https://github.com/charlieboggus/rustboy/blob/master/LICENSE) for more details.
